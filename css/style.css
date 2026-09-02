@@ -1,0 +1,98 @@
+* {
+	box-sizing: border-box;
+}
+
+[v-cloak] {
+	display: none;
+}
+
+body {
+	margin: 0;
+	color: #222;
+	background: #f5f6f8;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", sans-serif;
+}
+
+.container {
+	width: min(1200px, calc(100% - 32px));
+	margin: 32px auto;
+	padding: 24px;
+	background: #fff;
+	border: 1px solid #ddd;
+	border-radius: 8px;
+}
+
+h1 {
+	margin: 0 0 20px;
+	font-size: 28px;
+}
+
+.table-wrapper {
+	margin-bottom: 20px;
+	overflow-x: auto;
+}
+
+table {
+	width: 100%;
+	border-collapse: collapse;
+	white-space: nowrap;
+}
+
+th,
+td {
+	padding: 9px 12px;
+	border: 1px solid #ccc;
+	text-align: left;
+}
+
+th {
+	background: #e9eef5;
+}
+
+tr:nth-child(even) td {
+	background: #fafafa;
+}
+
+button {
+	padding: 10px 20px;
+	color: #fff;
+	background: #2867b2;
+	border: 0;
+	border-radius: 5px;
+	font-size: 16px;
+	cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+	background: #1f528e;
+}
+
+button:disabled {
+	cursor: not-allowed;
+	opacity: 0.55;
+}
+
+.message {
+	margin: 0 0 18px;
+	padding: 10px 12px;
+	background: #eef2f7;
+	border-radius: 4px;
+}
+
+.message.success {
+	color: #176b36;
+	background: #e8f7ed;
+}
+
+.message.error {
+	color: #a52222;
+	background: #fdecec;
+}
+
+@media (max-width: 600px) {
+	.container {
+		width: calc(100% - 16px);
+		margin: 8px auto;
+		padding: 16px;
+	}
+}

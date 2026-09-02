@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>WorkManager</title>
+	<link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+	<main id="app" class="container" v-cloak>
+		<h1>WorkManager</h1>
+
+		<p v-if="isLoading" class="message">Excelファイルを読み込んでいます...</p>
+		<p v-if="message" class="message" :class="messageType" role="status">
+			{{ message }}
+		</p>
+
+		<div v-if="!isLoading && rows.length" class="table-wrapper">
+			<table>
+				<tbody>
+					<tr v-for="(row, rowIndex) in rows" :key="rowIndex">
+						<template v-if="rowIndex === 0">
+							<th v-for="(cell, cellIndex) in displayRow(row)" :key="cellIndex">
+								{{ formatCell(cell) }}
+							</th>
+						</template>
+						<template v-else>
+							<td v-for="(cell, cellIndex) in displayRow(row)" :key="cellIndex">
+								{{ formatCell(cell) }}
+							</td>
+						</template>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<p v-if="!isLoading && !rows.length && !message" class="message">
+			表示できるデータがありません。
+		</p>
+
+		<button
+			type="button"
+			@click="saveTestData"
+			:disabled="isLoading || isSaving || !workbook"
+		>
+			{{ isSaving ? '保存中...' : '保存テスト' }}
+		</button>
+	</main>
+
+	<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+	<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+	<script src="./js/app.js"></script>
+</body>
+</html>
