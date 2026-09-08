@@ -163,7 +163,8 @@ button:disabled {
 	grid-column: span 2;
 }
 
-.form-field input {
+.form-field input,
+.form-field select {
 	width: 100%;
 	min-width: 0;
 	padding: 10px 12px;
@@ -173,7 +174,8 @@ button:disabled {
 	font: inherit;
 }
 
-.form-field input:focus {
+.form-field input:focus,
+.form-field select:focus {
 	outline: 2px solid #2867b2;
 	outline-offset: 1px;
 }

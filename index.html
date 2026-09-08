@@ -76,7 +76,33 @@
 						:class="{ 'form-field-wide': /案件名|件名|住所/.test(field.label) }"
 					>
 						<span>{{ field.label }}</span>
-						<input type="text" v-model="editableRow[field.index]">
+						<select
+							v-if="field.label.replace(/\s/g, '') === '取引先名'"
+							v-model="editableRow[field.index]"
+							:disabled="!customerMaster || isSaving"
+							@change="onCustomerChanged"
+						>
+							<option value="">取引先を選択してください</option>
+							<option
+								v-if="editableRow[field.index] && !customerNames.includes(editableRow[field.index])"
+								:value="editableRow[field.index]"
+							>{{ editableRow[field.index] }}（現在値・マスター未登録）</option>
+							<option v-for="name in customerNames" :key="name" :value="name">{{ name }}</option>
+						</select>
+						<select
+							v-else-if="field.label.replace(/\s/g, '') === '担当者氏名'"
+							v-model="editableRow[field.index]"
+							:disabled="!customerContactMaster || !selectedCustomerName || isSaving"
+							@change="onContactChanged"
+						>
+							<option value="">{{ !selectedCustomerName ? '先に取引先を選択してください' : contactNames.length ? '担当者を選択してください' : '該当する担当者がいません' }}</option>
+							<option
+								v-if="editableRow[field.index] && !contactNames.includes(editableRow[field.index])"
+								:value="editableRow[field.index]" disabled
+							>{{ editableRow[field.index] }}（現在値・候補外）</option>
+							<option v-for="name in contactNames" :key="name" :value="name">{{ name }}</option>
+						</select>
+						<input v-else type="text" v-model="editableRow[field.index]">
 					</label>
 				</div>
 			</div>

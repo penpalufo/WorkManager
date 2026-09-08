@@ -25,6 +25,25 @@ Vue.createApp({
 	},
 
 	computed: {
+		// JSONの取引先名を選択候補にする
+		customerNames() {
+			const rows = this.customerMaster ? this.customerMaster.rows : [];
+			return [...new Set(rows.map(row => String(row['取引先名'] || '')).filter(name => name.trim()))];
+		},
+		selectedCustomerName() {
+			const index = this.headerRow.findIndex(label => String(label).replace(/\s/g, '') === '取引先名');
+			return index < 0 ? '' : String(this.editableRow[index] || '').trim();
+		},
+
+		// 選択中の取引先と一致する担当者氏名だけを候補にする
+		contactNames() {
+			if (!this.customerContactMaster || !this.selectedCustomerName) return [];
+			return [...new Set(this.customerContactMaster.rows
+				.filter(row => String(row['取引先名'] || '').trim() === this.selectedCustomerName)
+				.map(row => String(row['担当者氏名'] || '').trim())
+				.filter(Boolean))];
+		},
+
 		// 1行目は全ページ共通の見出しとして扱う
 		headerRow() {
 			return this.rows.length ? this.rows[0] : [];
@@ -64,7 +83,7 @@ Vue.createApp({
 			};
 
 			this.headerRow.forEach((header, index) => {
-				const label = String(header || '項目' + (index + 1));
+				const label = this.fieldLabel(header || '項目' + (index + 1));
 				const field = { index: index, label: label };
 
 				if (/取引先|顧客|担当者|住所/.test(label)) {
@@ -83,6 +102,44 @@ Vue.createApp({
 	},
 
 	methods: {
+		// Excelの元の列名は保持し、表示と列判定に共通の名前を使う
+		fieldLabel(value) {
+			const label = String(value);
+			const aliases = {
+				'取引先担当者住所参照::担当者ID': '担当者ID',
+				'取引先名マスタ::取引先ID': '取引先ID'
+			};
+			return aliases[label.replace(/\s/g, '')] || label;
+		},
+
+		// 取引先を変更したら以前の担当者を解除する
+		onCustomerChanged() {
+			const customer = this.customerMaster && this.customerMaster.rows.find(row =>
+				String(row['取引先名'] || '').trim() === this.selectedCustomerName);
+			this.headerRow.forEach((label, index) => {
+				if (this.fieldLabel(label).replace(/\s/g, '') === '取引先ID') {
+					this.editableRow[index] = customer ? customer['取引先ID'] || '' : '';
+				}
+				if (['担当者氏名', '担当者ID'].includes(this.fieldLabel(label).replace(/\s/g, ''))) {
+					this.editableRow[index] = '';
+				}
+			});
+		},
+
+		// 選択した取引先・担当者氏名に対応する担当者IDを反映する
+		onContactChanged() {
+			const nameIndex = this.headerRow.findIndex(label =>
+				String(label).replace(/\s/g, '') === '担当者氏名');
+			const name = nameIndex < 0 ? '' : String(this.editableRow[nameIndex] || '').trim();
+			const contact = name && this.customerContactMaster && this.customerContactMaster.rows.find(row =>
+				String(row['取引先名'] || '').trim() === this.selectedCustomerName &&
+				String(row['担当者氏名'] || '').trim() === name);
+			this.headerRow.forEach((label, index) => {
+				if (this.fieldLabel(label).replace(/\s/g, '') === '担当者ID') {
+					this.editableRow[index] = contact ? contact['担当者ID'] || '' : '';
+				}
+			});
+		},
 		// 取引先IDのない行を除外し、同じIDは先に登場したレコードを採用する
 		uniqueCustomers(master) {
 			const headers = master.rows[0] || [];
@@ -172,9 +229,12 @@ Vue.createApp({
 			}
 			// ID未設定・空欄・空白だけの行を除外する
 			const rows = [headers];
+			const seenContacts = new Set();
 			for (let index = 1; index < excel.rows.length; index++) {
 				const row = excel.rows[index];
-				if (String(row[idIndex] == null ? '' : row[idIndex]).trim() !== '') {
+				const id = String(row[idIndex] == null ? '' : row[idIndex]).trim();
+				if (id && !seenContacts.has(id)) {
+					seenContacts.add(id);
 					rows.push(row);
 				}
 			}
@@ -183,15 +243,31 @@ Vue.createApp({
 				rows: XLSX.utils.sheet_to_json(XLSX.utils.aoa_to_sheet(rows), { defval: '', raw: false })
 			};
 			console.log('担当者マスター: JSON保存開始', master.rows.length, '件');
+			const uploadId = Array.from(crypto.getRandomValues(new Uint8Array(16)), v => v.toString(16).padStart(2, '0')).join('');
+			let offset = 0;
+			let start = 0;
+			do {
+				const batch = [];
+				let bytes = 0;
+				while (start < master.rows.length && batch.length < 500) {
+					const row = master.rows[start];
+					const size = new TextEncoder().encode(JSON.stringify(row)).length + 1;
+					if (size > 1000000) throw new Error('担当者1件のデータが1MBを超えています。');
+					if (bytes + size > 1000000) break;
+					batch.push(row); bytes += size; start++;
+				}
 			const saved = await fetch('./php/save-customer-contact-master.php', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(master)
+				body: JSON.stringify({ id: uploadId, offset: offset, final: start === master.rows.length, rows: batch })
 			});
 			const result = await this.getJsonResponse(saved);
 			if (!saved.ok || !result.success) {
 				throw new Error(result.message || '担当者マスターのJSON保存に失敗しました。');
 			}
+				offset = result.offset;
+				console.log('担当者マスター: 保存済み', start, '/', master.rows.length);
+			} while (start < master.rows.length);
 			return master;
 		},
 
