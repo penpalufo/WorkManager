@@ -76,8 +76,9 @@
 						:class="{ 'form-field-wide': /案件名|件名|住所/.test(field.label) }"
 					>
 						<span>{{ field.label }}</span>
+						<span v-if="group.title === 'その他'" class="field-text">{{ formatEditValue(editableRow[field.index], field.label) }}</span>
 						<select
-							v-if="field.label.replace(/\s/g, '') === '取引先名'"
+							v-else-if="field.label.replace(/\s/g, '') === '取引先名'"
 							v-model="editableRow[field.index]"
 							:disabled="!customerMaster || isSaving"
 							@change="onCustomerChanged"
@@ -102,7 +103,14 @@
 							>{{ editableRow[field.index] }}（現在値・候補外）</option>
 							<option v-for="name in contactNames" :key="name" :value="name">{{ name }}</option>
 						</select>
-						<input v-else type="text" v-model="editableRow[field.index]">
+						<input
+							v-else-if="['請求日', '請求予定日'].includes(field.label.replace(/\s/g, ''))"
+							type="date"
+							:value="datePickerValue(editableRow[field.index], field.label)"
+							:disabled="isSaving"
+							@change="setPickedDate(field.index, $event.target.value)"
+						>
+						<input v-else type="text" :value="formatEditValue(editableRow[field.index], field.label)" @input="editableRow[field.index] = $event.target.value">
 					</label>
 				</div>
 			</div>
