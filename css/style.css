@@ -28,7 +28,7 @@ h1 {
 }
 
 .table-wrapper {
-	margin-bottom: 20px;
+	margin-bottom: 12px;
 	overflow-x: auto;
 }
 
@@ -53,6 +53,20 @@ tr:nth-child(even) td {
 	background: #fafafa;
 }
 
+.project-row {
+	cursor: pointer;
+}
+
+.project-row:hover td,
+.project-row:focus td {
+	background: #e8f2fc;
+}
+
+.project-row:focus {
+	outline: 2px solid #2867b2;
+	outline-offset: -2px;
+}
+
 button {
 	padding: 10px 20px;
 	color: #fff;
@@ -70,6 +84,103 @@ button:hover:not(:disabled) {
 button:disabled {
 	cursor: not-allowed;
 	opacity: 0.55;
+}
+
+.pagination {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 16px;
+	margin: 0 0 20px;
+}
+
+.pagination button {
+	min-width: 74px;
+	padding: 7px 14px;
+}
+
+.pagination span {
+	min-width: 180px;
+	text-align: center;
+}
+
+.save-button {
+	display: block;
+}
+
+.secondary-button {
+	color: #222;
+	background: #e5e7eb;
+}
+
+.secondary-button:hover:not(:disabled) {
+	background: #d4d7dc;
+}
+
+.project-editor {
+	display: grid;
+	gap: 24px;
+}
+
+.editor-toolbar {
+	display: flex;
+	align-items: center;
+	gap: 18px;
+}
+
+.editor-toolbar h2 {
+	margin: 0;
+	font-size: 24px;
+}
+
+.editor-section {
+	padding: 20px;
+	border: 1px solid #6c8ba4;
+	border-radius: 5px;
+	background: #fbfbfb;
+}
+
+.editor-section h3 {
+	margin: 0 0 16px;
+	font-size: 18px;
+}
+
+.form-grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 16px 24px;
+}
+
+.form-field {
+	display: grid;
+	grid-template-columns: minmax(100px, auto) minmax(0, 1fr);
+	align-items: center;
+	gap: 10px;
+	font-weight: 600;
+}
+
+.form-field-wide {
+	grid-column: span 2;
+}
+
+.form-field input {
+	width: 100%;
+	min-width: 0;
+	padding: 10px 12px;
+	border: 1px solid #70a4c4;
+	border-radius: 4px;
+	background: #fff;
+	font: inherit;
+}
+
+.form-field input:focus {
+	outline: 2px solid #2867b2;
+	outline-offset: 1px;
+}
+
+.editor-actions {
+	display: flex;
+	gap: 12px;
 }
 
 .message {
@@ -94,5 +205,29 @@ button:disabled {
 		width: calc(100% - 16px);
 		margin: 8px auto;
 		padding: 16px;
+	}
+
+	.pagination {
+		gap: 8px;
+	}
+
+	.pagination span {
+		min-width: 0;
+		font-size: 14px;
+	}
+
+	.editor-toolbar {
+		align-items: flex-start;
+		flex-direction: column;
+	}
+
+	.form-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.form-field,
+	.form-field-wide {
+		grid-column: auto;
+		grid-template-columns: 1fr;
 	}
 }
