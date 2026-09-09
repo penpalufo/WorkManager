@@ -1,6 +1,6 @@
 <?php
 // SheetJSが生成したExcelバイナリをNASへ保存する
-$excelPath = '\\\\192.168.100.4\\disk1\\WorkManager\\WorkManager---test10.xlsx';
+$excelPath = '\\\\192.168.100.4\\disk1\\WorkManager\\WorkManager.xlsx';
 
 header('Content-Type: application/json; charset=UTF-8');
 header('Cache-Control: no-store, no-cache, must-revalidate');

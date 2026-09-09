@@ -1,4 +1,5 @@
 'use strict';
+console.log('ver 0.1.3');
 
 Vue.createApp({
 	data() {
@@ -9,6 +10,8 @@ Vue.createApp({
 			columnCount: 0,
 			currentPage: 1,
 			pageSize: 100,
+			customerSearch: '',
+			projectSearch: '',
 			viewMode: 'list',
 			selectedRowIndex: -1,
 			editableRow: [],
@@ -49,9 +52,19 @@ Vue.createApp({
 			return this.rows.length ? this.rows[0] : [];
 		},
 
+		filteredEntries() {
+			const customerIndex = this.headerRow.findIndex(h => String(h).replace(/\s/g, '') === '取引先名');
+			const projectIndex = this.headerRow.findIndex(h => String(h).replace(/\s/g, '') === '案件名');
+			const customer = this.searchText(this.customerSearch);
+			const project = this.searchText(this.projectSearch);
+			// 絞り込み後も元のExcel行番号を保持する
+			return this.rows.slice(1).map((row, index) => ({ row, index: index + 1 })).reverse()
+				.filter(entry => (!customer || this.searchText(entry.row[customerIndex]).includes(customer)) &&
+					(!project || this.searchText(entry.row[projectIndex]).includes(project)));
+		},
+
 		dataRows() {
-			// Excelの最終データ行を一覧の先頭に表示する
-			return this.rows.length > 1 ? this.rows.slice(1).reverse() : [];
+			return this.filteredEntries.map(entry => entry.row);
 		},
 
 		totalItems() {
@@ -101,7 +114,50 @@ Vue.createApp({
 		}
 	},
 
+	watch: {
+		customerSearch() { this.currentPage = 1; },
+		projectSearch() { this.currentPage = 1; },
+		totalPages(value) { this.currentPage = Math.min(this.currentPage, value); }
+	},
+
 	methods: {
+		searchText(value) {
+			return String(value == null ? '' : value).normalize('NFKC').trim().toLowerCase();
+		},
+		// 指定の日付項目だけを年/月/日に整える（元データは変更しない）
+		formatEditValue(value, label) {
+			const text = this.formatCell(value);
+			if (!['請求日', '請求予定日', 'データ入力日', '集計日'].includes(String(label).replace(/\s/g, ''))) return text;
+			const match = text.trim().match(/^(\d{1,4})\/(\d{1,2})\/(\d{1,4})$/);
+			if (!match) return text;
+			let year, month, day;
+			if (match[1].length === 4) {
+				year = Number(match[1]); month = Number(match[2]); day = Number(match[3]);
+			} else {
+				month = Number(match[1]); day = Number(match[2]); year = Number(match[3]);
+				if (match[3].length <= 2) year += year < 30 ? 2000 : 1900;
+			}
+			const date = new Date(year, month - 1, day);
+			if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return text;
+			return year + '/' + month + '/' + day;
+		},
+
+		// カレンダー入力にはゼロ埋めしたYYYY-MM-DDを渡す
+		datePickerValue(value, label) {
+			const text = this.formatEditValue(value, label);
+			const match = text.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
+			return match ? match[1] + '-' + match[2].padStart(2, '0') + '-' + match[3].padStart(2, '0') : '';
+		},
+
+		setPickedDate(index, value) {
+			if (!value) {
+				this.editableRow[index] = '';
+				return;
+			}
+			const parts = value.split('-');
+			this.editableRow[index] = parts[0] + '/' + Number(parts[1]) + '/' + Number(parts[2]);
+		},
+
 		// Excelの元の列名は保持し、表示と列判定に共通の名前を使う
 		fieldLabel(value) {
 			const label = String(value);
@@ -486,7 +542,9 @@ Vue.createApp({
 		// 一覧で選択した案件を編集画面へ展開する
 		openProject(rowIndex) {
 			// 逆順の表示位置をExcel上の元の行番号へ戻す
-			this.selectedRowIndex = this.totalItems - (this.pageStartIndex + rowIndex);
+			const entry = this.filteredEntries[this.pageStartIndex + rowIndex];
+			if (!entry) return;
+			this.selectedRowIndex = entry.index;
 			this.editableRow = Array.from({ length: this.columnCount }, (_, index) => {
 				const value = this.rows[this.selectedRowIndex][index];
 				return value === null || typeof value === 'undefined' ? '' : value;

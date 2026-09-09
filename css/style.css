@@ -2,6 +2,21 @@
 	box-sizing: border-box;
 }
 
+.search-bar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 12px;
+	margin-bottom: 20px;
+}
+.search-bar input {
+	font: inherit;
+	padding: 8px;
+	border: 1px solid #70a4c4;
+	border-radius: 4px;
+	max-width: 100%;
+}
+
 [v-cloak] {
 	display: none;
 }
@@ -161,6 +176,13 @@ button:disabled {
 
 .form-field-wide {
 	grid-column: span 2;
+}
+
+.field-text {
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+	min-width: 0;
+	font-weight: normal;
 }
 
 .form-field input,

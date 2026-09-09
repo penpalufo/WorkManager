@@ -18,6 +18,14 @@
 			{{ masterLoadMessage }}
 		</p>
 
+		<div v-if="viewMode === 'list' && !isLoading && !isMasterLoading && rows.length" class="search-bar">
+			<label>取引先名 <input type="search" v-model="customerSearch" placeholder="取引先名で検索"></label>
+			<label>案件名 <input type="search" v-model="projectSearch" placeholder="案件名で検索"></label>
+			<button type="button" @click="customerSearch = ''; projectSearch = ''">クリア</button>
+			<span role="status">検索結果 {{ totalItems }}件 / 全{{ Math.max(0, rows.length - 1) }}件</span>
+			<p v-if="!totalItems">条件に一致する案件がありません。</p>
+		</div>
+
 		<div v-if="!isLoading && !isMasterLoading && rows.length && viewMode === 'list'" class="table-wrapper">
 			<table>
 				<thead>
