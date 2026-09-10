@@ -2,6 +2,11 @@
 
 今後の変更時はバージョンを更新し、js/app.jsの起動ログとこの履歴を揃えます。
 
+## 0.3.1（2026-09-10）
+
+- app.jsをES Modulesの入口に変更し、config・master・project-list・project-form・excel・utilsへ機能別に分割。
+- Vue Options API、CDNライブラリ、既存の処理を維持。バージョンと更新日はjs/config.jsで管理。
+
 ## 0.3.0（2026-09-10）
 
 - 編集画面に「この案件を削除する」テキストリンクを追加。確認承認後に対象行を削除し、Excelへの保存成功後に一覧へ戻る。
