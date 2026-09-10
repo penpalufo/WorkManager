@@ -1,9 +1,14 @@
 'use strict';
-console.log('ver 0.1.3');
+// 更新時はこのバージョン・日付とCHANGELOG.mdを揃える
+const APP_VERSION = '0.1.4';
+const APP_UPDATED_AT = '2026/9/10';
+console.log('ver ' + APP_VERSION);
 
 Vue.createApp({
 	data() {
 		return {
+			appVersion: APP_VERSION,
+			appUpdatedAt: APP_UPDATED_AT,
 			workbook: null,
 			sheetName: '',
 			rows: [],

@@ -8,7 +8,10 @@
 </head>
 <body>
 	<main id="app" class="container" v-cloak>
-		<h1>WorkManager</h1>
+		<header class="app-header">
+			<h1>WorkManager</h1>
+			<span class="app-version">v{{ appVersion }} ／ 最終更新日：{{ appUpdatedAt }}</span>
+		</header>
 
 		<p v-if="isLoading || isMasterLoading" class="message">データをロード中です...</p>
 		<p v-if="message" class="message" :class="messageType" role="status">
