@@ -1,6 +1,6 @@
 'use strict';
 // 更新時はこのバージョン・日付とCHANGELOG.mdを揃える
-const APP_VERSION = '0.1.4';
+const APP_VERSION = '0.3.0';
 const APP_UPDATED_AT = '2026/9/10';
 console.log('ver ' + APP_VERSION);
 
@@ -126,6 +126,137 @@ Vue.createApp({
 	},
 
 	methods: {
+		// セルの値・書式を保持しながら削除行より下を1行上へ移す
+		worksheetWithoutRow(source, rowIndex) {
+			const sheet = { ...source };
+			for (const address of Object.keys(source)) {
+				if (!/^[A-Z]+[1-9]\d*$/.test(address)) continue;
+				const cell = XLSX.utils.decode_cell(address);
+				if (cell.r >= rowIndex) delete sheet[address];
+			}
+			for (const address of Object.keys(source)) {
+				if (!/^[A-Z]+[1-9]\d*$/.test(address)) continue;
+				const cell = XLSX.utils.decode_cell(address);
+				if (cell.r > rowIndex) sheet[XLSX.utils.encode_cell({ r: cell.r - 1, c: cell.c })] = source[address];
+			}
+			const range = XLSX.utils.decode_range(source['!ref']);
+			range.e.r = Math.max(range.s.r, range.e.r - 1);
+			sheet['!ref'] = XLSX.utils.encode_range(range);
+			if (source['!rows']) {
+				sheet['!rows'] = source['!rows'].slice();
+				sheet['!rows'].splice(rowIndex, 1);
+			}
+			if (source['!merges']) {
+				sheet['!merges'] = source['!merges'].filter(m => !(m.s.r === rowIndex && m.e.r === rowIndex))
+					.map(m => ({ s: { c: m.s.c, r: m.s.r > rowIndex ? m.s.r - 1 : m.s.r },
+						e: { c: m.e.c, r: m.e.r >= rowIndex ? m.e.r - 1 : m.e.r } }));
+			}
+			if (source['!autofilter'] && source['!autofilter'].ref) {
+				const filter = XLSX.utils.decode_range(source['!autofilter'].ref);
+				if (filter.e.r >= rowIndex) filter.e.r = Math.max(filter.s.r, filter.e.r - 1);
+				sheet['!autofilter'] = { ...source['!autofilter'], ref: XLSX.utils.encode_range(filter) };
+			}
+			return sheet;
+		},
+
+		async deleteProject() {
+			if (this.isSaving || this.viewMode !== 'edit' || this.selectedRowIndex < 1 || !this.workbook) return;
+			const rowIndex = this.selectedRowIndex;
+			const nameIndex = this.headerRow.findIndex(h => String(h).replace(/\s/g, '') === '案件名');
+			const name = this.rows[rowIndex][nameIndex] || '選択中の案件';
+			if (!window.confirm('「' + name + '」を削除しますか？\nExcelからこの案件を削除します。この操作は取り消せません。')) return;
+			this.isSaving = true;
+			this.message = '';
+			try {
+				const sheet = this.worksheetWithoutRow(this.workbook.Sheets[this.sheetName], rowIndex);
+				const candidate = { ...this.workbook, Sheets: { ...this.workbook.Sheets, [this.sheetName]: sheet } };
+				const response = await fetch('./php/save.php', {
+					method: 'POST', headers: { 'Content-Type': 'application/octet-stream' },
+					body: XLSX.write(candidate, { bookType: 'xlsx', type: 'array' })
+				});
+				const result = await this.getJsonResponse(response);
+				if (!response.ok || !result.success) throw new Error(result.message || '削除を保存できませんでした。');
+				this.workbook = candidate;
+				this.rows.splice(rowIndex, 1);
+				this.selectedRowIndex = -1;
+				this.editableRow = [];
+				this.viewMode = 'list';
+				this.message = '案件を削除しました';
+				this.messageType = 'success';
+			} catch (error) {
+				this.message = '削除に失敗しました: ' + error.message;
+				this.messageType = 'error';
+			} finally {
+				this.isSaving = false;
+			}
+		},
+
+		// 表示順や検索条件ではなく、Excel末尾の制作番号を基準にする
+		nextProductionNumber(index) {
+			for (let r = this.rows.length - 1; r >= 1; r--) {
+				const value = String(this.rows[r][index] == null ? '' : this.rows[r][index]).trim().replace(/,/g, '');
+				if (!value) continue;
+				if (!/^\d+$/.test(value) || !Number.isSafeInteger(Number(value) + 1)) {
+					throw new Error('最後の制作番号を数値として採番できません。');
+				}
+				return String(Number(value) + 1).padStart(value.length, '0');
+			}
+			return '1';
+		},
+
+		openNewProject() {
+			if (!this.workbook || this.isSaving) return;
+			try {
+				const index = this.headerRow.findIndex(h => String(h).replace(/\s/g, '') === '制作番号');
+				if (index < 0) throw new Error('Excelに制作番号列がありません。');
+				this.editableRow = Array(this.columnCount).fill('');
+				this.editableRow[index] = this.nextProductionNumber(index);
+				this.selectedRowIndex = -1;
+				this.viewMode = 'new';
+				this.message = '';
+				this.messageType = '';
+				window.scrollTo({ top: 0, behavior: 'smooth' });
+			} catch (error) {
+				this.message = error.message;
+				this.messageType = 'error';
+			}
+		},
+
+		async addProject() {
+			if (this.isSaving || !this.workbook || this.viewMode !== 'new') return;
+			this.isSaving = true;
+			this.message = '';
+			try {
+				const index = this.headerRow.findIndex(h => String(h).replace(/\s/g, '') === '制作番号');
+				if (index < 0) throw new Error('Excelに制作番号列がありません。');
+				const row = this.editableRow.slice();
+				row[index] = this.nextProductionNumber(index);
+				// 成功するまでは元のWorkbookに追加行を残さない
+				const worksheet = { ...this.workbook.Sheets[this.sheetName] };
+				const candidate = { ...this.workbook, Sheets: { ...this.workbook.Sheets, [this.sheetName]: worksheet } };
+				XLSX.utils.sheet_add_aoa(worksheet, [row], { origin: -1 });
+				const response = await fetch('./php/save.php', {
+					method: 'POST', headers: { 'Content-Type': 'application/octet-stream' },
+					body: XLSX.write(candidate, { bookType: 'xlsx', type: 'array' })
+				});
+				const result = await this.getJsonResponse(response);
+				if (!response.ok || !result.success) throw new Error(result.message || '案件を追加できませんでした。');
+				this.workbook = candidate;
+				this.rows.push(row);
+				this.customerSearch = '';
+				this.projectSearch = '';
+				this.currentPage = 1;
+				this.viewMode = 'list';
+				this.editableRow = [];
+				this.message = '案件を追加しました';
+				this.messageType = 'success';
+			} catch (error) {
+				this.message = '追加に失敗しました: ' + error.message;
+				this.messageType = 'error';
+			} finally {
+				this.isSaving = false;
+			}
+		},
 		searchText(value) {
 			return String(value == null ? '' : value).normalize('NFKC').trim().toLowerCase();
 		},
@@ -561,6 +692,7 @@ Vue.createApp({
 		},
 
 		backToList() {
+			if (this.isSaving) return;
 			this.viewMode = 'list';
 			this.selectedRowIndex = -1;
 			this.editableRow = [];

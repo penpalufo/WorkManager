@@ -29,6 +29,10 @@
 			<p v-if="!totalItems">条件に一致する案件がありません。</p>
 		</div>
 
+		<p v-if="viewMode === 'list' && !isLoading && !isMasterLoading && rows.length">
+			<button type="button" @click="openNewProject" :disabled="isSaving || !workbook">新規案件追加</button>
+		</p>
+
 		<div v-if="!isLoading && !isMasterLoading && rows.length && viewMode === 'list'" class="table-wrapper">
 			<table>
 				<thead>
@@ -69,12 +73,12 @@
 			</button>
 		</nav>
 
-		<section v-if="!isLoading && !isMasterLoading && viewMode === 'edit'" class="project-editor">
+		<section v-if="!isLoading && !isMasterLoading && (viewMode === 'edit' || viewMode === 'new')" class="project-editor">
 			<div class="editor-toolbar">
-				<button type="button" class="secondary-button" @click="backToList">
+				<button type="button" class="secondary-button" @click="backToList" :disabled="isSaving">
 					一覧へ戻る
 				</button>
-				<h2>案件の編集</h2>
+				<h2>{{ viewMode === 'new' ? '新規案件追加' : '案件の編集' }}</h2>
 			</div>
 
 			<div v-for="group in editFieldGroups" :key="group.title" class="editor-section">
@@ -121,18 +125,19 @@
 							:disabled="isSaving"
 							@change="setPickedDate(field.index, $event.target.value)"
 						>
-						<input v-else type="text" :value="formatEditValue(editableRow[field.index], field.label)" @input="editableRow[field.index] = $event.target.value">
+						<input v-else type="text" :readonly="viewMode === 'new' && field.label.replace(/\s/g, '') === '制作番号'" :value="formatEditValue(editableRow[field.index], field.label)" @input="editableRow[field.index] = $event.target.value">
 					</label>
 				</div>
 			</div>
 
 			<div class="editor-actions">
-				<button type="button" @click="saveProjectChanges" :disabled="isSaving">
-					{{ isSaving ? '保存中...' : '変更を保存' }}
+				<button type="button" @click="viewMode === 'new' ? addProject() : saveProjectChanges()" :disabled="isSaving">
+					{{ isSaving ? '保存中...' : viewMode === 'new' ? '追加' : '変更を保存' }}
 				</button>
 				<button type="button" class="secondary-button" @click="backToList" :disabled="isSaving">
 					キャンセル
 				</button>
+				<button v-if="viewMode === 'edit'" type="button" class="delete-link" @click="deleteProject" :disabled="isSaving">この案件を削除する</button>
 			</div>
 		</section>
 

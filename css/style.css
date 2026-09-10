@@ -219,7 +219,20 @@ button:disabled {
 	outline-offset: 1px;
 }
 
+.delete-link {
+	color: #a52222;
+	background: transparent;
+	text-decoration: underline;
+	padding: 8px;
+}
+.delete-link:hover:not(:disabled) {
+	background: transparent;
+	color: #761818;
+}
+
 .editor-actions {
+	flex-wrap: wrap;
+	align-items: center;
 	display: flex;
 	gap: 12px;
 }
