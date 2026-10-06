@@ -149,6 +149,14 @@ button:disabled {
 	background: #d4d7dc;
 }
 
+.pdf-button {
+	background: #315180;
+}
+
+.pdf-button:hover:not(:disabled) {
+	background: #243e64;
+}
+
 .project-editor {
 	display: grid;
 	gap: 24px;

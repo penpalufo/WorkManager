@@ -5,6 +5,7 @@ import { projectFormComputed, projectFormMethods } from './project-form.js';
 import { excelMethods } from './excel.js';
 import { utilsMethods } from './utils.js';
 import { fileLockMethods } from './file-lock.js';
+import { invoicePdfMethods } from './invoice-pdf.js';
 
 console.log('ver ' + APP_VERSION);
 
@@ -33,6 +34,7 @@ data() {
 			isLoading: false,
 			isMasterLoading: false,
 			isSaving: false,
+			isGeneratingPdf: false,
 			message: '',
 			messageType: '',
 			masterLoadMessage: '',
@@ -55,7 +57,8 @@ methods: {
     ...projectFormMethods,
     ...excelMethods,
     ...utilsMethods,
-    ...fileLockMethods
+    ...fileLockMethods,
+    ...invoicePdfMethods
 },
 async mounted() {
 		await this.acquireFileLock();

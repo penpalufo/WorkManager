@@ -126,7 +126,13 @@
 							:disabled="isSaving"
 							@change="setPickedDate(field.index, $event.target.value)"
 						>
-						<input v-else type="text" :readonly="viewMode === 'new' && field.label.replace(/\s/g, '') === '制作番号'" :value="formatEditValue(editableRow[field.index], field.label)" @input="editableRow[field.index] = $event.target.value">
+						<input
+							v-else
+							type="text"
+							:readonly="(viewMode === 'new' && field.label.replace(/\s/g, '') === '制作番号') || ['税額', '税込請求金額'].includes(field.label.replace(/\s/g, ''))"
+							:value="formatEditValue(editableRow[field.index], field.label)"
+							@input="onEditFieldInput(field.index, field.label, $event.target.value)"
+						>
 					</label>
 				</div>
 			</div>
@@ -137,6 +143,9 @@
 				</button>
 				<button type="button" class="secondary-button" @click="backToList" :disabled="isSaving">
 					キャンセル
+				</button>
+				<button v-if="viewMode === 'edit'" type="button" class="pdf-button" @click="createInvoicePdf" :disabled="isSaving || isGeneratingPdf">
+					{{ isGeneratingPdf ? '印刷画面を準備中...' : '請求書を印刷' }}
 				</button>
 				<button v-if="viewMode === 'edit'" type="button" class="delete-link" @click="deleteProject" :disabled="isSaving">この案件を削除する</button>
 			</div>

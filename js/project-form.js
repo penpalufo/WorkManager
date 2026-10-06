@@ -30,6 +30,7 @@ editFieldGroups() {
 
 			this.headerRow.forEach((header, index) => {
 				const label = this.fieldLabel(header || '項目' + (index + 1));
+				if (label.replace(/\s/g, '') === '請求フラグ') return;
 				const field = { index: index, label: label };
 
 				if (/取引先|顧客|担当者|住所/.test(label)) {
@@ -48,6 +49,52 @@ editFieldGroups() {
 };
 
 export const projectFormMethods = {
+	projectFieldIndex(label) {
+		const normalized = String(label).replace(/\s/g, '');
+		return this.headerRow.findIndex((header) =>
+			this.fieldLabel(header).replace(/\s/g, '') === normalized);
+	},
+
+	numericBillingValue(value) {
+		const normalized = String(value == null ? '' : value).replace(/[￥¥,%\s]/g, '');
+		if (!normalized) return null;
+		const number = Number(normalized);
+		return Number.isFinite(number) ? number : null;
+	},
+
+	recalculateBilling() {
+		const amountIndex = this.projectFieldIndex('請求金額');
+		const rateIndex = this.projectFieldIndex('税率');
+		const taxIndex = this.projectFieldIndex('税額');
+		const totalIndex = this.projectFieldIndex('税込請求金額');
+		if ([amountIndex, rateIndex, taxIndex, totalIndex].some(index => index < 0)) return;
+		const amount = this.numericBillingValue(this.editableRow[amountIndex]);
+		const rate = this.numericBillingValue(this.editableRow[rateIndex]);
+		if (amount === null || rate === null) {
+			this.editableRow[taxIndex] = '';
+			this.editableRow[totalIndex] = '';
+			return;
+		}
+		const tax = Math.round(amount * rate / 100);
+		this.editableRow[taxIndex] = String(tax);
+		this.editableRow[totalIndex] = String(Math.round(amount + tax));
+	},
+
+	initializeBilling() {
+		const rateIndex = this.projectFieldIndex('税率');
+		if (rateIndex >= 0 && String(this.editableRow[rateIndex] || '').trim() === '') {
+			this.editableRow[rateIndex] = '10';
+		}
+		this.recalculateBilling();
+	},
+
+	onEditFieldInput(index, label, value) {
+		this.editableRow[index] = value;
+		if (['請求金額', '税率'].includes(String(label).replace(/\s/g, ''))) {
+			this.recalculateBilling();
+		}
+	},
+
 async deleteProject() {
 			if (this.isSaving || !this.hasFileLock || this.viewMode !== 'edit' || this.selectedRowIndex < 1 || !this.workbook) return;
 			const rowIndex = this.selectedRowIndex;
@@ -99,6 +146,7 @@ openNewProject() {
 				if (index < 0) throw new Error('Excelに制作番号列がありません。');
 				this.editableRow = Array(this.columnCount).fill('');
 				this.editableRow[index] = this.nextProductionNumber(index);
+				this.initializeBilling();
 				this.selectedRowIndex = -1;
 				this.viewMode = 'new';
 				this.message = '';
@@ -262,6 +310,7 @@ openProject(rowIndex) {
 				const value = this.rows[this.selectedRowIndex][index];
 				return value === null || typeof value === 'undefined' ? '' : value;
 			});
+			this.initializeBilling();
 			this.message = '';
 			this.messageType = '';
 			this.viewMode = 'edit';
