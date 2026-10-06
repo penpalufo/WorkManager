@@ -20,6 +20,7 @@
 		<p v-if="masterLoadMessage" class="message error" role="alert">
 			{{ masterLoadMessage }}
 		</p>
+		<p v-if="lockMessage" class="message error" role="alert">{{ lockMessage }}</p>
 
 		<div v-if="viewMode === 'list' && !isLoading && !isMasterLoading && rows.length" class="search-bar">
 			<label>取引先名 <input type="search" v-model="customerSearch" placeholder="取引先名で検索"></label>
@@ -30,7 +31,7 @@
 		</div>
 
 		<p v-if="viewMode === 'list' && !isLoading && !isMasterLoading && rows.length">
-			<button type="button" @click="openNewProject" :disabled="isSaving || !workbook">新規案件追加</button>
+			<button type="button" @click="openNewProject" :disabled="isSaving || !workbook || !hasFileLock">新規案件追加</button>
 		</p>
 
 		<div v-if="!isLoading && !isMasterLoading && rows.length && viewMode === 'list'" class="table-wrapper">
@@ -150,7 +151,7 @@
 			class="save-button"
 			type="button"
 			@click="saveTestData"
-			:disabled="isLoading || isMasterLoading || isSaving || !workbook"
+			:disabled="isLoading || isMasterLoading || isSaving || !workbook || !hasFileLock"
 		>
 			{{ isSaving ? '保存中...' : '保存テスト' }}
 		</button>

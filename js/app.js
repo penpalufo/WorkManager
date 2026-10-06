@@ -4,6 +4,7 @@ import { projectListComputed, projectListWatch, projectListMethods } from './pro
 import { projectFormComputed, projectFormMethods } from './project-form.js';
 import { excelMethods } from './excel.js';
 import { utilsMethods } from './utils.js';
+import { fileLockMethods } from './file-lock.js';
 
 console.log('ver ' + APP_VERSION);
 
@@ -12,6 +13,7 @@ console.log('ver ' + APP_VERSION);
 Vue.createApp({
 data() {
 		return {
+			lockClientId: window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID() : String(Date.now()) + '-' + Math.random(),
 			appVersion: APP_VERSION,
 			appUpdatedAt: APP_UPDATED_AT,
 			workbook: null,
@@ -33,7 +35,11 @@ data() {
 			isSaving: false,
 			message: '',
 			messageType: '',
-			masterLoadMessage: ''
+			masterLoadMessage: '',
+			hasFileLock: false,
+			isFileLocked: false,
+			lockMessage: '',
+			lockRefreshTimer: null
 		};
 	},
 computed: {
@@ -48,10 +54,19 @@ methods: {
     ...projectListMethods,
     ...projectFormMethods,
     ...excelMethods,
-    ...utilsMethods
+    ...utilsMethods,
+    ...fileLockMethods
 },
-mounted() {
+async mounted() {
+		await this.acquireFileLock();
+		this.lockRefreshTimer = window.setInterval(() => this.refreshFileLock(), 60000);
+		window.addEventListener('beforeunload', this.releaseFileLock);
 		this.loadExcel();
 		this.loadMasterExcels();
+	},
+beforeUnmount() {
+		window.clearInterval(this.lockRefreshTimer);
+		window.removeEventListener('beforeunload', this.releaseFileLock);
+		this.releaseFileLock();
 	}
 }).mount('#app');

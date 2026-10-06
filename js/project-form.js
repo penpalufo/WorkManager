@@ -49,7 +49,7 @@ editFieldGroups() {
 
 export const projectFormMethods = {
 async deleteProject() {
-			if (this.isSaving || this.viewMode !== 'edit' || this.selectedRowIndex < 1 || !this.workbook) return;
+			if (this.isSaving || !this.hasFileLock || this.viewMode !== 'edit' || this.selectedRowIndex < 1 || !this.workbook) return;
 			const rowIndex = this.selectedRowIndex;
 			const nameIndex = this.headerRow.findIndex(h => String(h).replace(/\s/g, '') === '案件名');
 			const name = this.rows[rowIndex][nameIndex] || '選択中の案件';
@@ -60,7 +60,7 @@ async deleteProject() {
 				const sheet = this.worksheetWithoutRow(this.workbook.Sheets[this.sheetName], rowIndex);
 				const candidate = { ...this.workbook, Sheets: { ...this.workbook.Sheets, [this.sheetName]: sheet } };
 				const response = await fetch('./php/save.php', {
-					method: 'POST', headers: { 'Content-Type': 'application/octet-stream' },
+					method: 'POST', headers: { 'Content-Type': 'application/octet-stream', 'X-WorkManager-Lock': this.lockClientId },
 					body: XLSX.write(candidate, { bookType: 'xlsx', type: 'array' })
 				});
 				const result = await this.getJsonResponse(response);
@@ -93,7 +93,7 @@ nextProductionNumber(index) {
 		},
 
 openNewProject() {
-			if (!this.workbook || this.isSaving) return;
+			if (!this.workbook || this.isSaving || !this.hasFileLock) return;
 			try {
 				const index = this.headerRow.findIndex(h => String(h).replace(/\s/g, '') === '制作番号');
 				if (index < 0) throw new Error('Excelに制作番号列がありません。');
@@ -111,7 +111,7 @@ openNewProject() {
 		},
 
 async addProject() {
-			if (this.isSaving || !this.workbook || this.viewMode !== 'new') return;
+			if (this.isSaving || !this.hasFileLock || !this.workbook || this.viewMode !== 'new') return;
 			this.isSaving = true;
 			this.message = '';
 			try {
@@ -124,7 +124,7 @@ async addProject() {
 				const candidate = { ...this.workbook, Sheets: { ...this.workbook.Sheets, [this.sheetName]: worksheet } };
 				XLSX.utils.sheet_add_aoa(worksheet, [row], { origin: -1 });
 				const response = await fetch('./php/save.php', {
-					method: 'POST', headers: { 'Content-Type': 'application/octet-stream' },
+					method: 'POST', headers: { 'Content-Type': 'application/octet-stream', 'X-WorkManager-Lock': this.lockClientId },
 					body: XLSX.write(candidate, { bookType: 'xlsx', type: 'array' })
 				});
 				const result = await this.getJsonResponse(response);
@@ -197,7 +197,7 @@ createTestRow() {
 		},
 
 async saveTestData() {
-			if (!this.workbook || this.isSaving) {
+			if (!this.workbook || this.isSaving || !this.hasFileLock) {
 				return;
 			}
 
@@ -220,7 +220,8 @@ async saveTestData() {
 				const response = await fetch('./php/save.php', {
 					method: 'POST',
 					headers: {
-						'Content-Type': 'application/octet-stream'
+						'Content-Type': 'application/octet-stream',
+						'X-WorkManager-Lock': this.lockClientId
 					},
 					body: excelData
 				});
@@ -252,6 +253,7 @@ async saveTestData() {
 		},
 
 openProject(rowIndex) {
+			if (!this.hasFileLock) return;
 			// 逆順の表示位置をExcel上の元の行番号へ戻す
 			const entry = this.filteredEntries[this.pageStartIndex + rowIndex];
 			if (!entry) return;
@@ -274,7 +276,7 @@ backToList() {
 		},
 
 async saveProjectChanges() {
-			if (!this.workbook || this.selectedRowIndex < 1 || this.isSaving) {
+			if (!this.workbook || !this.hasFileLock || this.selectedRowIndex < 1 || this.isSaving) {
 				return;
 			}
 
@@ -297,7 +299,7 @@ async saveProjectChanges() {
 
 				const response = await fetch('./php/save.php', {
 					method: 'POST',
-					headers: { 'Content-Type': 'application/octet-stream' },
+					headers: { 'Content-Type': 'application/octet-stream', 'X-WorkManager-Lock': this.lockClientId },
 					body: excelData
 				});
 				const result = await this.getJsonResponse(response);
