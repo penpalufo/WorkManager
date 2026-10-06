@@ -56,10 +56,36 @@ export const projectFormMethods = {
 	},
 
 	numericBillingValue(value) {
-		const normalized = String(value == null ? '' : value).replace(/[￥¥,%\s]/g, '');
+		const normalized = String(value == null ? '' : value).replace(/[￥¥,，%\s]/g, '');
 		if (!normalized) return null;
 		const number = Number(normalized);
 		return Number.isFinite(number) ? number : null;
+	},
+
+	isAmountField(label) {
+		return ['請求金額', '見積り金額', '見積金額', '税額', '税込請求金額']
+			.includes(String(label).replace(/\s/g, ''));
+	},
+
+	formatAmountField(value) {
+		const normalized = String(value == null ? '' : value).replace(/[,，\s]/g, '');
+		if (!normalized) return '';
+		const number = Number(normalized);
+		return Number.isFinite(number)
+			? number.toLocaleString('ja-JP', { maximumFractionDigits: 20 })
+			: String(value);
+	},
+
+	formatAmountInput(index, label, value) {
+		if (!this.isAmountField(label)) return;
+		this.editableRow[index] = this.formatAmountField(value);
+	},
+
+	rowWithoutAmountSeparators(row) {
+		return row.map((value, index) => {
+			const label = this.fieldLabel(this.headerRow[index] || '');
+			return this.isAmountField(label) ? String(value == null ? '' : value).replace(/[,，]/g, '') : value;
+		});
 	},
 
 	recalculateBilling() {
@@ -165,7 +191,7 @@ async addProject() {
 			try {
 				const index = this.headerRow.findIndex(h => String(h).replace(/\s/g, '') === '制作番号');
 				if (index < 0) throw new Error('Excelに制作番号列がありません。');
-				const row = this.editableRow.slice();
+				const row = this.rowWithoutAmountSeparators(this.editableRow);
 				row[index] = this.nextProductionNumber(index);
 				// 成功するまでは元のWorkbookに追加行を残さない
 				const worksheet = { ...this.workbook.Sheets[this.sheetName] };
@@ -336,7 +362,7 @@ async saveProjectChanges() {
 
 			try {
 				const worksheet = this.workbook.Sheets[this.sheetName];
-				const updatedRow = this.editableRow.slice();
+				const updatedRow = this.rowWithoutAmountSeparators(this.editableRow);
 				XLSX.utils.sheet_add_aoa(worksheet, [updatedRow], {
 					origin: { r: this.selectedRowIndex, c: 0 }
 				});

@@ -8,6 +8,7 @@ searchText(value) {
 
 formatEditValue(value, label) {
 			const text = this.formatCell(value);
+			if (this.isAmountField && this.isAmountField(label)) return this.formatAmountField(text);
 			if (!['請求日', '請求予定日', 'データ入力日', '集計日'].includes(String(label).replace(/\s/g, ''))) return text;
 			const match = text.trim().match(/^(\d{1,4})\/(\d{1,2})\/(\d{1,4})$/);
 			if (!match) return text;

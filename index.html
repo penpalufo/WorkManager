@@ -10,7 +10,12 @@
 	<main id="app" class="container" v-cloak>
 		<header class="app-header">
 			<h1>WorkManager</h1>
-			<span class="app-version">v{{ appVersion }} ／ 最終更新日：{{ appUpdatedAt }}</span>
+			<a
+				class="app-version"
+				href="./md.html?file=仕様書_v0.5.2.md"
+				target="_blank"
+				rel="noopener noreferrer"
+			>v{{ appVersion }} ／ 最終更新日：{{ appUpdatedAt }}</a>
 		</header>
 
 		<p v-if="isLoading || isMasterLoading" class="message">データをロード中です...</p>
@@ -93,6 +98,10 @@
 					>
 						<span>{{ field.label }}</span>
 						<span v-if="group.title === 'その他'" class="field-text">{{ formatEditValue(editableRow[field.index], field.label) }}</span>
+						<span
+							v-else-if="['制作番号', '製作番号', '担当者ID', '取引先ID', '税額', '税込請求金額'].includes(field.label.replace(/\s/g, ''))"
+							class="field-text"
+						>{{ formatEditValue(editableRow[field.index], field.label) }}</span>
 						<select
 							v-else-if="field.label.replace(/\s/g, '') === '取引先名'"
 							v-model="editableRow[field.index]"
@@ -132,6 +141,7 @@
 							:readonly="(viewMode === 'new' && field.label.replace(/\s/g, '') === '制作番号') || ['税額', '税込請求金額'].includes(field.label.replace(/\s/g, ''))"
 							:value="formatEditValue(editableRow[field.index], field.label)"
 							@input="onEditFieldInput(field.index, field.label, $event.target.value)"
+							@blur="formatAmountInput(field.index, field.label, $event.target.value)"
 						>
 					</label>
 				</div>
