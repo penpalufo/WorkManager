@@ -3,6 +3,7 @@
 
 const requiredColumns = ['請求日', '制作番号', '案件名', '取引先名', '担当者氏名', '税込請求金額'];
 
+// 選択月の明細、クライアント別小計、月間合計を画面用に組み立てる。
 export const billingReportComputed = {
 	billingReportTitle() {
 		const match = String(this.billingReportMonth || '').match(/^(\d{4})-(\d{2})$/);
@@ -18,6 +19,7 @@ export const billingReportComputed = {
 		const indexes = Object.fromEntries(requiredColumns.map(label => [label, this.projectFieldIndex(label)]));
 		const groups = new Map();
 
+		// 1行目はExcelの見出しなので除外し、請求日の年月が一致する行だけを集計する。
 		this.rows.slice(1).forEach((row, rowOffset) => {
 			const date = this.billingReportDate(row[indexes['請求日']]);
 			if (!date || date.monthKey !== this.billingReportMonth) return;
@@ -65,6 +67,7 @@ export const billingReportComputed = {
 };
 
 export const billingReportMethods = {
+	// 画面を初めて開いた場合は、利用端末の現在月を選択する。
 	defaultBillingReportMonth() {
 		const now = new Date();
 		return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
@@ -79,6 +82,7 @@ export const billingReportMethods = {
 	},
 
 	billingReportDate(value) {
+		// Excelの日付表記を比較用キーと画面表示用文字列へ正規化する。
 		const text = this.formatEditValue(value, '請求日').trim();
 		const match = text.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})(?:\s.*)?$/);
 		if (!match) return null;

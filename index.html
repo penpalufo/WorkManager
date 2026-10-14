@@ -10,16 +10,18 @@
 </head>
 <body>
 	<main id="app" class="container" v-cloak>
+		<!-- 全画面共通：アプリ名、バージョン、最終更新日 -->
 		<header class="app-header">
 			<h1>WorkManager</h1>
 			<a
 				class="app-version"
-				href="./md.html?file=仕様書_v0.6.1.md"
+				href="./md.html?file=仕様書_v0.6.3.md"
 				target="_blank"
 				rel="noopener noreferrer"
 			>v{{ appVersion }} ／ 最終更新日：{{ appUpdatedAt }}</a>
 		</header>
 
+		<!-- 読み込み、保存、ロックの状態を利用者へ通知する領域 -->
 		<p v-if="isLoading || isMasterLoading" class="message">データをロード中です...</p>
 		<p v-if="message" class="message" :class="messageType" role="status">
 			{{ message }}
@@ -28,11 +30,16 @@
 			{{ masterLoadMessage }}
 		</p>
 		<p v-if="lockMessage" class="message error" role="alert">{{ lockMessage }}</p>
+		<p v-if="ignoreFileLock" class="message lock-bypass-message" role="status">
+			ファイルロックを無視する保守モードで動作しています。
+		</p>
 
+		<!-- リスト画面：検索条件と画面操作 -->
 		<div v-if="viewMode === 'list' && !isLoading && !isMasterLoading && rows.length" class="search-bar">
+			<label>制作番号 <input type="search" v-model="productionNumberSearch" placeholder="制作番号で検索"></label>
 			<label>取引先名 <input type="search" v-model="customerSearch" placeholder="取引先名で検索"></label>
 			<label>案件名 <input type="search" v-model="projectSearch" placeholder="案件名で検索"></label>
-			<button type="button" @click="customerSearch = ''; projectSearch = ''">クリア</button>
+			<button type="button" @click="productionNumberSearch = ''; customerSearch = ''; projectSearch = ''">クリア</button>
 			<span role="status">検索結果 {{ totalItems }}件 / 全{{ Math.max(0, rows.length - 1) }}件</span>
 			<p v-if="!totalItems">条件に一致する案件がありません。</p>
 		</div>
@@ -42,6 +49,7 @@
 			<button type="button" class="report-button" @click="openBillingReport">請求分を表示</button>
 		</div>
 
+		<!-- リスト画面：Excelの案件を新しい順に表示 -->
 		<div v-if="!isLoading && !isMasterLoading && rows.length && viewMode === 'list'" class="table-wrapper">
 			<table>
 				<thead>
@@ -68,6 +76,7 @@
 			</table>
 		</div>
 
+		<!-- リスト画面：100件単位のページ切り替え -->
 		<nav
 			v-if="!isLoading && !isMasterLoading && rows.length && viewMode === 'list'"
 			class="pagination"
@@ -82,6 +91,7 @@
 			</button>
 		</nav>
 
+		<!-- 新規追加・案件編集画面：Excel列を内容別のブロックに分けて表示 -->
 		<section v-if="!isLoading && !isMasterLoading && (viewMode === 'edit' || viewMode === 'new')" class="project-editor">
 			<div class="editor-toolbar">
 				<button type="button" class="secondary-button" @click="backToList" :disabled="isSaving">
@@ -153,6 +163,7 @@
 				</div>
 			</div>
 
+			<!-- 編集内容の保存、キャンセル、請求書印刷、案件削除 -->
 			<div class="editor-actions">
 				<button type="button" @click="viewMode === 'new' ? addProject() : saveProjectChanges()" :disabled="isSaving">
 					{{ isSaving ? '保存中...' : viewMode === 'new' ? '追加' : '変更を保存' }}
@@ -167,6 +178,7 @@
 			</div>
 		</section>
 
+		<!-- 請求分画面：選択月の案件をクライアント別に集計 -->
 		<section v-if="!isLoading && !isMasterLoading && rows.length && viewMode === 'billing-report'" class="billing-report-screen">
 			<div class="report-controls">
 				<button type="button" class="secondary-button" @click="backToList">一覧へ戻る</button>
@@ -183,6 +195,7 @@
 				税込請求金額を読み取れない行があります（Excel行：{{ billingReportInvalidItems.map(item => item.rowNumber).join('、') }}）。該当金額は合計に含めていません。
 			</p>
 
+			<!-- この範囲だけがA4横向きの印刷対象になる -->
 			<div v-if="!billingReportMissingColumns.length" class="billing-report-print">
 				<h2>{{ billingReportTitle }}</h2>
 				<p v-if="!billingReportGroups.length" class="report-empty">対象月の請求データはありません。</p>
@@ -224,12 +237,14 @@
 			</div>
 		</section>
 
+		<!-- Excelに表示可能な行がない場合の案内 -->
 		<p v-if="!isLoading && !isMasterLoading && !rows.length && !message" class="message">
 			表示できるデータがありません。
 		</p>
 
 	</main>
 
+	<!-- VueとSheetJSはCDN版を読み込み、app.jsから画面を起動する -->
 	<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 	<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 	<script type="module" src="./js/app.js"></script>

@@ -3,6 +3,7 @@
 
 export const projectFormComputed = {
 customerNames() {
+			// 取引先マスターから重複しない選択候補を作る。
 			const rows = this.customerMaster ? this.customerMaster.rows : [];
 			return [...new Set(rows.map(row => String(row['取引先名'] || '')).filter(name => name.trim()))];
 		},
@@ -21,6 +22,7 @@ contactNames() {
 		},
 
 editFieldGroups() {
+			// Excel列を画面上の4ブロックへ分類し、請求情報だけ指定順に並べ替える。
 			const groups = {
 				basic: { title: '案件情報', fields: [] },
 				customer: { title: '取引先・担当者情報', fields: [] },
@@ -51,11 +53,14 @@ editFieldGroups() {
 				return (aIndex < 0 ? billingOrder.length : aIndex) - (bIndex < 0 ? billingOrder.length : bIndex);
 			});
 
-			return Object.values(groups).filter((group) => group.fields.length);
+			// 「その他」は分類とデータを維持し、設定を変えれば再表示できる状態にしておく。
+			return Object.values(groups).filter((group) => group.fields.length &&
+				(this.showOtherSection || group.title !== 'その他'));
 		}
 };
 
 export const projectFormMethods = {
+	// 画面表示名を使っても、元のExcel列位置を特定できるようにする。
 	projectFieldIndex(label) {
 		const normalized = String(label).replace(/\s/g, '');
 		return this.headerRow.findIndex((header) =>
@@ -96,6 +101,7 @@ export const projectFormMethods = {
 	},
 
 	updateBillingFlag() {
+		// 請求日と請求金額が揃った案件を自動的に請求済みにする。
 		const dateIndex = this.projectFieldIndex('請求日');
 		const amountIndex = this.projectFieldIndex('請求金額');
 		const flagIndex = this.projectFieldIndex('請求フラグ');
@@ -106,6 +112,7 @@ export const projectFormMethods = {
 	},
 
 	recalculateBilling() {
+		// 請求金額と税率から税額・税込請求金額を即時に再計算する。
 		const amountIndex = this.projectFieldIndex('請求金額');
 		const rateIndex = this.projectFieldIndex('税率');
 		const taxIndex = this.projectFieldIndex('税額');
@@ -150,7 +157,7 @@ async deleteProject() {
 			try {
 				const sheet = this.worksheetWithoutRow(this.workbook.Sheets[this.sheetName], rowIndex);
 				const candidate = { ...this.workbook, Sheets: { ...this.workbook.Sheets, [this.sheetName]: sheet } };
-				const response = await fetch('./php/save.php', {
+				const response = await fetch(this.workManagerSaveUrl(), {
 					method: 'POST', headers: { 'Content-Type': 'application/octet-stream', 'X-WorkManager-Lock': this.lockClientId },
 					body: XLSX.write(candidate, { bookType: 'xlsx', type: 'array' })
 				});
@@ -203,6 +210,7 @@ openNewProject() {
 		},
 
 async addProject() {
+			// Workbookのコピーへ行を追加し、サーバー保存成功後に画面へ反映する。
 			if (this.isSaving || !this.hasFileLock || !this.workbook || this.viewMode !== 'new') return;
 			this.isSaving = true;
 			this.message = '';
@@ -216,7 +224,7 @@ async addProject() {
 				const worksheet = { ...this.workbook.Sheets[this.sheetName] };
 				const candidate = { ...this.workbook, Sheets: { ...this.workbook.Sheets, [this.sheetName]: worksheet } };
 				XLSX.utils.sheet_add_aoa(worksheet, [row], { origin: -1 });
-				const response = await fetch('./php/save.php', {
+				const response = await fetch(this.workManagerSaveUrl(), {
 					method: 'POST', headers: { 'Content-Type': 'application/octet-stream', 'X-WorkManager-Lock': this.lockClientId },
 					body: XLSX.write(candidate, { bookType: 'xlsx', type: 'array' })
 				});
@@ -224,6 +232,7 @@ async addProject() {
 				if (!response.ok || !result.success) throw new Error(result.message || '案件を追加できませんでした。');
 				this.workbook = candidate;
 				this.rows.push(row);
+				this.productionNumberSearch = '';
 				this.customerSearch = '';
 				this.projectSearch = '';
 				this.currentPage = 1;
@@ -301,6 +310,7 @@ backToList() {
 		},
 
 async saveProjectChanges() {
+			// 保存に失敗した場合に戻せるよう、編集前の行を退避してから更新する。
 			if (!this.workbook || !this.hasFileLock || this.selectedRowIndex < 1 || this.isSaving) {
 				return;
 			}
@@ -323,7 +333,7 @@ async saveProjectChanges() {
 					type: 'array'
 				});
 
-				const response = await fetch('./php/save.php', {
+				const response = await fetch(this.workManagerSaveUrl(), {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/octet-stream', 'X-WorkManager-Lock': this.lockClientId },
 					body: excelData

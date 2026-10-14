@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 startWorkManagerSession();
-if (!lockClientId() || !sessionOwnsLock(lockClientId())) {
+if (!ignoreFileLockRequested() && (!lockClientId() || !sessionOwnsLock(lockClientId()))) {
 	sendJson(409, false, 'ファイルロック中です。編集はできません。');
 }
 
@@ -67,7 +67,7 @@ if (!@copy($tempPath, $excelPath)) {
 
 @unlink($tempPath);
 
-if (!refreshOwnedLock(lockClientId())) {
+if (!ignoreFileLockRequested() && !refreshOwnedLock(lockClientId())) {
 	sendJson(200, true, 'Excelファイルを保存しましたが、ファイルロックを更新できませんでした。');
 }
 

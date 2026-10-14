@@ -1,4 +1,5 @@
 /* 月別の請求分画面および印刷レイアウト */
+/* 画面上では隠し、読み上げソフトには列名を伝える */
 .visually-hidden {
 	position: absolute;
 	width: 1px;
@@ -11,6 +12,7 @@
 	border: 0;
 }
 
+/* ===== 対象月と印刷ボタン ===== */
 .billing-report-screen {
 	display: grid;
 	gap: 24px;
@@ -37,6 +39,7 @@
 	font: inherit;
 }
 
+/* ===== 請求分の見出しとクライアント別明細 ===== */
 .billing-report-print {
 	padding: 8px 4px;
 	color: #222;
@@ -103,6 +106,7 @@
 	text-align: right;
 }
 
+/* ===== エラー表示・月間総合計 ===== */
 .invalid-amount {
 	color: #a52222;
 }
@@ -124,6 +128,7 @@
 }
 
 @media print {
+	/* 操作部分を隠し、請求分だけをA4横向きで印刷する */
 	@page {
 		size: A4 landscape;
 		margin: 10mm;
@@ -152,6 +157,7 @@
 }
 
 @media (max-width: 600px) {
+	/* 明細列を潰さず、横スクロールで確認できるようにする */
 	.billing-report-table {
 		min-width: 900px;
 	}

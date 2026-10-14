@@ -25,6 +25,12 @@ function lockClientId()
 	return isset($_GET['client']) ? (string) $_GET['client'] : '';
 }
 
+// メイン画面の?ignoreLock=1を保存APIへ引き継いだ場合だけロック検査を省略する。
+function ignoreFileLockRequested()
+{
+	return isset($_GET['ignoreLock']) && (string) $_GET['ignoreLock'] === '1';
+}
+
 function sessionOwnsLock($clientId = null)
 {
 	if (empty($_SESSION['work_manager_lock'])) {

@@ -1,6 +1,18 @@
 // NAS上の排他ロックを取得し、編集中は定期的に有効期限を更新する
 export const fileLockMethods = {
+	workManagerSaveUrl() {
+		// メイン画面の保守用指定を、保存APIへ明示的に引き継ぐ。
+		return './php/save.php' + (this.ignoreFileLock ? '?ignoreLock=1' : '');
+	},
+
 	async acquireFileLock() {
+		// 起動時に編集権を取得する。取得できなくても一覧の閲覧は可能。
+		if (this.ignoreFileLock) {
+			this.hasFileLock = true;
+			this.isFileLocked = false;
+			this.lockMessage = '';
+			return;
+		}
 		try {
 			const response = await fetch('./php/lock.php?action=acquire&client=' + encodeURIComponent(this.lockClientId), { method: 'POST' });
 			const result = await this.getJsonResponse(response);
@@ -15,6 +27,8 @@ export const fileLockMethods = {
 	},
 
 	async refreshFileLock() {
+		// 長時間編集中でもロックが期限切れにならないよう定期更新する。
+		if (this.ignoreFileLock) return;
 		if (!this.hasFileLock) return;
 		try {
 			const response = await fetch('./php/lock.php?action=refresh&client=' + encodeURIComponent(this.lockClientId), { method: 'POST' });
@@ -32,6 +46,8 @@ export const fileLockMethods = {
 	},
 
 	releaseFileLock() {
+		// 画面を閉じる際も送信できるようsendBeaconを優先する。
+		if (this.ignoreFileLock) return;
 		if (!this.hasFileLock) return;
 		this.hasFileLock = false;
 		if (navigator.sendBeacon) {

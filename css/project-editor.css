@@ -1,4 +1,5 @@
 /* 新規案件追加・案件編集画面 */
+/* ===== 編集画面のボタンと全体配置 ===== */
 .pdf-button {
 	background: #315180;
 }
@@ -23,6 +24,7 @@
 	font-size: 24px;
 }
 
+/* ===== 案件情報・取引先情報・請求情報の各ブロック ===== */
 .editor-section {
 	padding: 20px;
 	border: 1px solid #6c8ba4;
@@ -54,9 +56,11 @@
 }
 
 .billing-row-start {
+	/* 請求情報の指定項目を3列グリッドの先頭から配置する */
 	grid-column-start: 1;
 }
 
+/* ===== 表示専用テキストと入力フォーム ===== */
 .field-text {
 	min-width: 0;
 	overflow-wrap: anywhere;
@@ -81,6 +85,7 @@
 	outline-offset: 1px;
 }
 
+/* ===== 保存・キャンセル・削除の操作領域 ===== */
 .delete-link {
 	padding: 8px;
 	color: #a52222;
@@ -101,6 +106,7 @@
 }
 
 @media (max-width: 600px) {
+	/* 狭い画面では3列フォームを1列にする */
 	.editor-toolbar {
 		align-items: flex-start;
 		flex-direction: column;

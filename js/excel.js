@@ -3,6 +3,7 @@
 
 export const excelMethods = {
 worksheetWithoutRow(source, rowIndex) {
+			// 対象行より下のセルや書式情報を1行上へ移動した新しいシートを作る。
 			const sheet = { ...source };
 			for (const address of Object.keys(source)) {
 				if (!/^[A-Z]+[1-9]\d*$/.test(address)) continue;
@@ -35,6 +36,7 @@ worksheetWithoutRow(source, rowIndex) {
 		},
 
 async loadExcelObject(url, label, includeRecords = true) {
+			// マスターExcelを取得し、配列形式とオブジェクト形式の両方へ変換する。
 			console.log(label + ': Excel取得開始');
 			const response = await fetch(url, { cache: 'no-store' });
 
@@ -79,6 +81,7 @@ async loadExcelObject(url, label, includeRecords = true) {
 		},
 
 async loadExcel() {
+			// 案件Excelを読み込み、1行目を見出しとして画面用の二次元配列へ変換する。
 			this.isLoading = true;
 			this.message = '';
 			this.messageType = '';

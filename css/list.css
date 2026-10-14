@@ -1,4 +1,5 @@
 /* アプリ共通および案件リスト画面 */
+/* ===== 全画面で使う基本設定 ===== */
 * {
 	box-sizing: border-box;
 }
@@ -94,6 +95,13 @@ button:disabled {
 	background: #fdecec;
 }
 
+.lock-bypass-message {
+	color: #7a4b00;
+	background: #fff3cd;
+	border: 1px solid #e4c56a;
+}
+
+/* ===== 案件の検索・操作ボタン ===== */
 .search-bar {
 	display: flex;
 	flex-wrap: wrap;
@@ -121,6 +129,7 @@ button:disabled {
 	background: #315180;
 }
 
+/* ===== 案件一覧テーブル ===== */
 .table-wrapper {
 	margin-bottom: 12px;
 	overflow-x: auto;
@@ -161,6 +170,7 @@ tr:nth-child(even) td {
 	outline-offset: -2px;
 }
 
+/* ===== 一覧のページ切り替え ===== */
 .pagination {
 	display: flex;
 	align-items: center;
@@ -180,6 +190,7 @@ tr:nth-child(even) td {
 }
 
 @media (max-width: 600px) {
+	/* スマートフォンでは外側の余白とページャーを縮める */
 	.container {
 		width: calc(100% - 16px);
 		margin: 8px auto;

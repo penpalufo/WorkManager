@@ -1,6 +1,7 @@
 // 編集中の案件から、A4横1ページの請求書PDFを生成する
 export const invoicePdfMethods = {
 	invoiceValue(label) {
+		// Excelの見出し名から、現在編集中の案件値を取得する。
 		const normalized = String(label).replace(/\s/g, '');
 		const index = this.headerRow.findIndex((header) =>
 			this.fieldLabel(header).replace(/\s/g, '') === normalized);
@@ -29,6 +30,7 @@ export const invoicePdfMethods = {
 	},
 
 	fitInvoiceText(context, text, maxWidth) {
+		// 帳票の幅に収まらない文字列は末尾を省略記号にする。
 		let value = String(text || '');
 		if (context.measureText(value).width <= maxWidth) return value;
 		while (value.length && context.measureText(value + '…').width > maxWidth) value = value.slice(0, -1);
@@ -36,6 +38,7 @@ export const invoicePdfMethods = {
 	},
 
 	async createInvoicePdf() {
+		// Canvasで請求書を描画し、別ウィンドウの印刷画面へ渡す。
 		if (this.viewMode !== 'edit' || this.isGeneratingPdf) return;
 		let printWindow = null;
 		this.isGeneratingPdf = true;

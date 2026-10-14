@@ -3,6 +3,7 @@
 
 export const masterMethods = {
 uniqueCustomers(master) {
+			// 取引先IDをキーに重複行を除き、画面で扱いやすいレコード形式へ変換する。
 			const headers = master.rows[0] || [];
 			const idIndex = headers.findIndex((value) =>
 				String(value).normalize('NFKC').replace(/\s/g, '').toLowerCase() === '取引先id');
@@ -26,6 +27,7 @@ uniqueCustomers(master) {
 		},
 
 async loadCustomerMaster() {
+			// 保存済みJSONを優先し、未作成の場合だけ元Excelから生成する。
 			const response = await fetch('./data/customerMaster.json', { cache: 'no-store' });
 			if (response.ok) {
 				const master = await response.json();
@@ -67,6 +69,7 @@ async saveCustomerMaster(master) {
 		},
 
 async loadCustomerContactMaster() {
+			// 件数の多い担当者マスターも、まず軽量なJSONの利用を試みる。
 			const response = await fetch('./data/customerContactMaster.json', { cache: 'no-store' });
 			if (response.ok) {
 				const master = await response.json();
@@ -132,6 +135,7 @@ async loadCustomerContactMaster() {
 		},
 
 async loadMasterExcels() {
+			// 取引先と担当者を個別に読み込み、一方の失敗が他方へ影響しないようにする。
 			this.isMasterLoading = true;
 			this.masterLoadMessage = '';
 

@@ -3,10 +3,12 @@
 
 export const utilsMethods = {
 searchText(value) {
+			// 全角・半角や大文字・小文字の差を吸収した検索文字列を作る。
 			return String(value == null ? '' : value).normalize('NFKC').trim().toLowerCase();
 		},
 
 formatEditValue(value, label) {
+			// 金額と日付だけ項目に適した表示へ整え、それ以外は文字列として返す。
 			const text = this.formatCell(value);
 			if (this.isAmountField && this.isAmountField(label)) return this.formatAmountField(text);
 			if (!['請求日', '請求予定日', 'データ入力日', '集計日'].includes(String(label).replace(/\s/g, ''))) return text;
@@ -31,6 +33,7 @@ datePickerValue(value, label) {
 		},
 
 fieldLabel(value) {
+			// Excel由来の長い関連列名を、画面で読みやすい名称へ置き換える。
 			const label = String(value);
 			const aliases = {
 				'取引先担当者住所参照::担当者ID': '担当者ID',
@@ -57,6 +60,7 @@ async getErrorMessage(response) {
 		},
 
 async getJsonResponse(response) {
+			// JSON以外のサーバー応答も利用者向けエラーへ変換する。
 			const text = await response.text();
 			try {
 				return JSON.parse(text);
