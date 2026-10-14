@@ -4,7 +4,9 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>WorkManager</title>
-	<link rel="stylesheet" href="./css/style.css">
+	<link rel="stylesheet" href="./css/list.css">
+	<link rel="stylesheet" href="./css/project-editor.css">
+	<link rel="stylesheet" href="./css/billing-report.css">
 </head>
 <body>
 	<main id="app" class="container" v-cloak>
@@ -12,7 +14,7 @@
 			<h1>WorkManager</h1>
 			<a
 				class="app-version"
-				href="./md.html?file=仕様書_v0.5.2.md"
+				href="./md.html?file=仕様書_v0.6.1.md"
 				target="_blank"
 				rel="noopener noreferrer"
 			>v{{ appVersion }} ／ 最終更新日：{{ appUpdatedAt }}</a>
@@ -35,9 +37,10 @@
 			<p v-if="!totalItems">条件に一致する案件がありません。</p>
 		</div>
 
-		<p v-if="viewMode === 'list' && !isLoading && !isMasterLoading && rows.length">
+		<div v-if="viewMode === 'list' && !isLoading && !isMasterLoading && rows.length" class="list-actions">
 			<button type="button" @click="openNewProject" :disabled="isSaving || !workbook || !hasFileLock">新規案件追加</button>
-		</p>
+			<button type="button" class="report-button" @click="openBillingReport">請求分を表示</button>
+		</div>
 
 		<div v-if="!isLoading && !isMasterLoading && rows.length && viewMode === 'list'" class="table-wrapper">
 			<table>
@@ -94,12 +97,15 @@
 						v-for="field in group.fields"
 						:key="field.index"
 						class="form-field"
-						:class="{ 'form-field-wide': /案件名|件名|住所/.test(field.label) }"
+						:class="{
+							'form-field-wide': /案件名|件名|住所/.test(field.label),
+							'billing-row-start': group.title === '請求情報' && ['請求日', '税率'].includes(field.label.replace(/\s/g, ''))
+						}"
 					>
 						<span>{{ field.label }}</span>
 						<span v-if="group.title === 'その他'" class="field-text">{{ formatEditValue(editableRow[field.index], field.label) }}</span>
 						<span
-							v-else-if="['制作番号', '製作番号', '担当者ID', '取引先ID', '税額', '税込請求金額'].includes(field.label.replace(/\s/g, ''))"
+							v-else-if="['制作番号', '製作番号', '担当者ID', '取引先ID', '請求フラグ', '税額', '税込請求金額'].includes(field.label.replace(/\s/g, ''))"
 							class="field-text"
 						>{{ formatEditValue(editableRow[field.index], field.label) }}</span>
 						<select
@@ -161,19 +167,67 @@
 			</div>
 		</section>
 
+		<section v-if="!isLoading && !isMasterLoading && rows.length && viewMode === 'billing-report'" class="billing-report-screen">
+			<div class="report-controls">
+				<button type="button" class="secondary-button" @click="backToList">一覧へ戻る</button>
+				<label>対象月
+					<input type="month" v-model="billingReportMonth">
+				</label>
+				<button type="button" @click="printBillingReport" :disabled="billingReportMissingColumns.length > 0">印刷</button>
+			</div>
+
+			<p v-if="billingReportMissingColumns.length" class="message error" role="alert">
+				請求分を表示できません。Excelに必要な列がありません：{{ billingReportMissingColumns.join('、') }}
+			</p>
+			<p v-else-if="billingReportInvalidItems.length" class="message error" role="alert">
+				税込請求金額を読み取れない行があります（Excel行：{{ billingReportInvalidItems.map(item => item.rowNumber).join('、') }}）。該当金額は合計に含めていません。
+			</p>
+
+			<div v-if="!billingReportMissingColumns.length" class="billing-report-print">
+				<h2>{{ billingReportTitle }}</h2>
+				<p v-if="!billingReportGroups.length" class="report-empty">対象月の請求データはありません。</p>
+
+				<section v-for="group in billingReportGroups" :key="group.customer" class="billing-client-group">
+					<h3>{{ group.customer }}</h3>
+					<table class="billing-report-table">
+						<thead>
+							<tr>
+								<th><span class="visually-hidden">請求日</span></th>
+								<th><span class="visually-hidden">制作番号</span></th>
+								<th><span class="visually-hidden">案件名</span></th>
+								<th><span class="visually-hidden">担当者氏名</span></th>
+								<th>税込み請求額</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr v-for="item in group.items" :key="item.rowNumber">
+								<td>{{ item.date }}</td>
+								<td>{{ item.productionNumber }}</td>
+								<td>{{ item.projectName }}</td>
+								<td>{{ item.contactName }}</td>
+								<td :class="{ 'invalid-amount': item.amount === null }">{{ formatBillingReportAmount(item.amount) }}</td>
+							</tr>
+						</tbody>
+						<tfoot>
+							<tr>
+								<td colspan="4"></td>
+								<th class="billing-client-total">{{ formatBillingReportAmount(group.total) }}</th>
+							</tr>
+						</tfoot>
+					</table>
+				</section>
+
+				<div v-if="billingReportGroups.length" class="billing-grand-total">
+					<strong>{{ billingReportTitle }}</strong>
+					<strong>{{ formatBillingReportAmount(billingReportTotal) }}</strong>
+				</div>
+			</div>
+		</section>
+
 		<p v-if="!isLoading && !isMasterLoading && !rows.length && !message" class="message">
 			表示できるデータがありません。
 		</p>
 
-		<button
-			v-if="viewMode === 'list'"
-			class="save-button"
-			type="button"
-			@click="saveTestData"
-			:disabled="isLoading || isMasterLoading || isSaving || !workbook || !hasFileLock"
-		>
-			{{ isSaving ? '保存中...' : '保存テスト' }}
-		</button>
 	</main>
 
 	<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>

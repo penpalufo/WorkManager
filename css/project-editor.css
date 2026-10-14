@@ -1,0 +1,118 @@
+/* 新規案件追加・案件編集画面 */
+.pdf-button {
+	background: #315180;
+}
+
+.pdf-button:hover:not(:disabled) {
+	background: #243e64;
+}
+
+.project-editor {
+	display: grid;
+	gap: 24px;
+}
+
+.editor-toolbar {
+	display: flex;
+	align-items: center;
+	gap: 18px;
+}
+
+.editor-toolbar h2 {
+	margin: 0;
+	font-size: 24px;
+}
+
+.editor-section {
+	padding: 20px;
+	border: 1px solid #6c8ba4;
+	border-radius: 5px;
+	background: #fbfbfb;
+}
+
+.editor-section h3 {
+	margin: 0 0 16px;
+	font-size: 18px;
+}
+
+.form-grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 16px 24px;
+}
+
+.form-field {
+	display: grid;
+	grid-template-columns: minmax(100px, auto) minmax(0, 1fr);
+	align-items: center;
+	gap: 10px;
+	font-weight: 600;
+}
+
+.form-field-wide {
+	grid-column: span 2;
+}
+
+.billing-row-start {
+	grid-column-start: 1;
+}
+
+.field-text {
+	min-width: 0;
+	overflow-wrap: anywhere;
+	white-space: pre-wrap;
+	font-weight: normal;
+}
+
+.form-field input,
+.form-field select {
+	width: 100%;
+	min-width: 0;
+	padding: 10px 12px;
+	border: 1px solid #70a4c4;
+	border-radius: 4px;
+	background: #fff;
+	font: inherit;
+}
+
+.form-field input:focus,
+.form-field select:focus {
+	outline: 2px solid #2867b2;
+	outline-offset: 1px;
+}
+
+.delete-link {
+	padding: 8px;
+	color: #a52222;
+	background: transparent;
+	text-decoration: underline;
+}
+
+.delete-link:hover:not(:disabled) {
+	color: #761818;
+	background: transparent;
+}
+
+.editor-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 12px;
+}
+
+@media (max-width: 600px) {
+	.editor-toolbar {
+		align-items: flex-start;
+		flex-direction: column;
+	}
+
+	.form-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.form-field,
+	.form-field-wide {
+		grid-column: auto;
+		grid-template-columns: 1fr;
+	}
+}

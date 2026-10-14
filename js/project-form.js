@@ -29,8 +29,8 @@ editFieldGroups() {
 			};
 
 			this.headerRow.forEach((header, index) => {
-				const label = this.fieldLabel(header || '項目' + (index + 1));
-				if (label.replace(/\s/g, '') === '請求フラグ') return;
+				let label = this.fieldLabel(header || '項目' + (index + 1));
+				if (['見積り金額', '見積金額'].includes(label.replace(/\s/g, ''))) label = '見積もり金額';
 				const field = { index: index, label: label };
 
 				if (/取引先|顧客|担当者|住所/.test(label)) {
@@ -42,6 +42,13 @@ editFieldGroups() {
 				} else {
 					groups.other.fields.push(field);
 				}
+			});
+
+			const billingOrder = ['請求予定日', '見積もり金額', '請求日', '請求金額', '請求フラグ', '税率', '税額', '税込請求金額'];
+			groups.billing.fields.sort((a, b) => {
+				const aIndex = billingOrder.indexOf(a.label.replace(/\s/g, ''));
+				const bIndex = billingOrder.indexOf(b.label.replace(/\s/g, ''));
+				return (aIndex < 0 ? billingOrder.length : aIndex) - (bIndex < 0 ? billingOrder.length : bIndex);
 			});
 
 			return Object.values(groups).filter((group) => group.fields.length);
@@ -63,7 +70,7 @@ export const projectFormMethods = {
 	},
 
 	isAmountField(label) {
-		return ['請求金額', '見積り金額', '見積金額', '税額', '税込請求金額']
+		return ['請求金額', '見積り金額', '見積金額', '見積もり金額', '税額', '税込請求金額']
 			.includes(String(label).replace(/\s/g, ''));
 	},
 
@@ -86,6 +93,16 @@ export const projectFormMethods = {
 			const label = this.fieldLabel(this.headerRow[index] || '');
 			return this.isAmountField(label) ? String(value == null ? '' : value).replace(/[,，]/g, '') : value;
 		});
+	},
+
+	updateBillingFlag() {
+		const dateIndex = this.projectFieldIndex('請求日');
+		const amountIndex = this.projectFieldIndex('請求金額');
+		const flagIndex = this.projectFieldIndex('請求フラグ');
+		if ([dateIndex, amountIndex, flagIndex].some(index => index < 0)) return;
+		const hasDate = String(this.editableRow[dateIndex] == null ? '' : this.editableRow[dateIndex]).trim() !== '';
+		const hasAmount = this.numericBillingValue(this.editableRow[amountIndex]) !== null;
+		if (hasDate && hasAmount) this.editableRow[flagIndex] = '請求済み';
 	},
 
 	recalculateBilling() {
@@ -119,6 +136,7 @@ export const projectFormMethods = {
 		if (['請求金額', '税率'].includes(String(label).replace(/\s/g, ''))) {
 			this.recalculateBilling();
 		}
+		if (String(label).replace(/\s/g, '') === '請求金額') this.updateBillingFlag();
 	},
 
 async deleteProject() {
@@ -191,6 +209,7 @@ async addProject() {
 			try {
 				const index = this.headerRow.findIndex(h => String(h).replace(/\s/g, '') === '制作番号');
 				if (index < 0) throw new Error('Excelに制作番号列がありません。');
+				this.updateBillingFlag();
 				const row = this.rowWithoutAmountSeparators(this.editableRow);
 				row[index] = this.nextProductionNumber(index);
 				// 成功するまでは元のWorkbookに追加行を残さない
@@ -227,6 +246,7 @@ setPickedDate(index, value) {
 			}
 			const parts = value.split('-');
 			this.editableRow[index] = parts[0] + '/' + Number(parts[1]) + '/' + Number(parts[2]);
+			this.updateBillingFlag();
 		},
 
 onCustomerChanged() {
@@ -254,76 +274,6 @@ onContactChanged() {
 					this.editableRow[index] = contact ? contact['担当者ID'] || '' : '';
 				}
 			});
-		},
-
-createTestRow() {
-			const values = [
-				'TEST',
-				'テスト案件',
-				new Date().toLocaleString('ja-JP'),
-				10000,
-				'未請求'
-			];
-
-			return Array.from({ length: this.columnCount }, (_, index) => {
-				return index < values.length ? values[index] : '';
-			});
-		},
-
-async saveTestData() {
-			if (!this.workbook || this.isSaving || !this.hasFileLock) {
-				return;
-			}
-
-			this.isSaving = true;
-			this.message = '';
-			this.messageType = '';
-
-			try {
-				const worksheet = this.workbook.Sheets[this.sheetName];
-				const newRow = this.createTestRow();
-
-				// 既存シートの末尾へ1行だけ追加する
-				XLSX.utils.sheet_add_aoa(worksheet, [newRow], { origin: -1 });
-
-				const excelData = XLSX.write(this.workbook, {
-					bookType: 'xlsx',
-					type: 'array'
-				});
-
-				const response = await fetch('./php/save.php', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/octet-stream',
-						'X-WorkManager-Lock': this.lockClientId
-					},
-					body: excelData
-				});
-
-				const result = await this.getJsonResponse(response);
-				if (!response.ok || !result.success) {
-					throw new Error(result.message || 'Excelファイルを保存できませんでした。');
-				}
-
-				this.rows.push(newRow);
-				// 逆順表示では追加した最新行が1ページ目に表示される
-				this.currentPage = 1;
-				this.message = '保存しました';
-				this.messageType = 'success';
-			} catch (error) {
-				console.error(error);
-				this.message = '保存に失敗しました: ' + error.message;
-				this.messageType = 'error';
-
-				// 失敗時はメモリ上の変更を残さないよう、NASから読み直す
-				await this.loadExcel();
-				if (!this.message) {
-					this.message = '保存に失敗しました。Excelを読み直しました。';
-					this.messageType = 'error';
-				}
-			} finally {
-				this.isSaving = false;
-			}
 		},
 
 openProject(rowIndex) {
@@ -362,6 +312,7 @@ async saveProjectChanges() {
 
 			try {
 				const worksheet = this.workbook.Sheets[this.sheetName];
+				this.updateBillingFlag();
 				const updatedRow = this.rowWithoutAmountSeparators(this.editableRow);
 				XLSX.utils.sheet_add_aoa(worksheet, [updatedRow], {
 					origin: { r: this.selectedRowIndex, c: 0 }

@@ -6,6 +6,7 @@ import { excelMethods } from './excel.js';
 import { utilsMethods } from './utils.js';
 import { fileLockMethods } from './file-lock.js';
 import { invoicePdfMethods } from './invoice-pdf.js';
+import { billingReportComputed, billingReportMethods } from './billing-report.js';
 
 console.log('ver ' + APP_VERSION);
 
@@ -25,6 +26,7 @@ data() {
 			pageSize: 100,
 			customerSearch: '',
 			projectSearch: '',
+			billingReportMonth: '',
 			viewMode: 'list',
 			selectedRowIndex: -1,
 			editableRow: [],
@@ -46,7 +48,8 @@ data() {
 	},
 computed: {
     ...projectListComputed,
-    ...projectFormComputed
+    ...projectFormComputed,
+    ...billingReportComputed
 },
 watch: {
     ...projectListWatch
@@ -58,7 +61,8 @@ methods: {
     ...excelMethods,
     ...utilsMethods,
     ...fileLockMethods,
-    ...invoicePdfMethods
+    ...invoicePdfMethods,
+    ...billingReportMethods
 },
 async mounted() {
 		await this.acquireFileLock();
