@@ -15,7 +15,7 @@
 			<h1>WorkManager</h1>
 			<a
 				class="app-version"
-				href="./md.html?file=仕様書_v0.6.3.md"
+				href="./md.html?file=仕様書_v0.7.0.md"
 				target="_blank"
 				rel="noopener noreferrer"
 			>v{{ appVersion }} ／ 最終更新日：{{ appUpdatedAt }}</a>
@@ -47,6 +47,7 @@
 		<div v-if="viewMode === 'list' && !isLoading && !isMasterLoading && rows.length" class="list-actions">
 			<button type="button" @click="openNewProject" :disabled="isSaving || !workbook || !hasFileLock">新規案件追加</button>
 			<button type="button" class="report-button" @click="openBillingReport">請求分を表示</button>
+			<button type="button" class="report-button" @click="downloadUnbilledList">未請求リスト</button>
 		</div>
 
 		<!-- リスト画面：Excelの案件を新しい順に表示 -->

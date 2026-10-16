@@ -8,6 +8,7 @@ import { utilsMethods } from './utils.js';
 import { fileLockMethods } from './file-lock.js';
 import { invoicePdfMethods } from './invoice-pdf.js';
 import { billingReportComputed, billingReportMethods } from './billing-report.js';
+import { unbilledListMethods } from './unbilled-list.js';
 
 console.log('ver ' + APP_VERSION);
 
@@ -73,7 +74,8 @@ methods: {
     ...utilsMethods,
     ...fileLockMethods,
     ...invoicePdfMethods,
-    ...billingReportMethods
+    ...billingReportMethods,
+    ...unbilledListMethods
 },
 async mounted() {
 		// 編集ロックを確保してから、案件Excelとマスターを読み込む
