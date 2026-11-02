@@ -39,7 +39,7 @@ editFieldGroups() {
 					groups.customer.fields.push(field);
 				} else if (/請求|見積|金額|税|入金/.test(label)) {
 					groups.billing.fields.push(field);
-				} else if (/案件|制作|管理番号|件名/.test(label)) {
+				} else if (/案件|制作|管理番号|件名|データ入力日/.test(label)) {
 					groups.basic.fields.push(field);
 				} else {
 					groups.other.fields.push(field);
@@ -100,15 +100,22 @@ export const projectFormMethods = {
 		});
 	},
 
+	setDefaultDataInputDate() {
+		const index = this.projectFieldIndex('データ入力日');
+		if (index < 0 || String(this.editableRow[index] == null ? '' : this.editableRow[index]).trim() !== '') return;
+		const today = new Date();
+		this.editableRow[index] = today.getFullYear() + '/' + (today.getMonth() + 1) + '/' + today.getDate();
+	},
+
 	updateBillingFlag() {
-		// 請求日と請求金額が揃った案件、または請求金額が0円の案件を請求済みにする。
+		// 請求条件を満たす案件を請求済み、それ以外を未請求へ更新する。
 		const dateIndex = this.projectFieldIndex('請求日');
 		const amountIndex = this.projectFieldIndex('請求金額');
 		const flagIndex = this.projectFieldIndex('請求フラグ');
 		if ([dateIndex, amountIndex, flagIndex].some(index => index < 0)) return;
 		const hasDate = String(this.editableRow[dateIndex] == null ? '' : this.editableRow[dateIndex]).trim() !== '';
 		const amount = this.numericBillingValue(this.editableRow[amountIndex]);
-		if (amount === 0 || (hasDate && amount !== null)) this.editableRow[flagIndex] = '請求済み';
+		this.editableRow[flagIndex] = amount !== null && (amount === 0 || hasDate) ? '請求済み' : '未請求';
 	},
 
 	recalculateBilling() {
@@ -197,6 +204,7 @@ openNewProject() {
 				if (index < 0) throw new Error('Excelに制作番号列がありません。');
 				this.editableRow = Array(this.columnCount).fill('');
 				this.editableRow[index] = this.nextProductionNumber(index);
+				this.setDefaultDataInputDate();
 				this.initializeBilling();
 				this.selectedRowIndex = -1;
 				this.viewMode = 'new';
@@ -217,6 +225,7 @@ async addProject() {
 			try {
 				const index = this.headerRow.findIndex(h => String(h).replace(/\s/g, '') === '制作番号');
 				if (index < 0) throw new Error('Excelに制作番号列がありません。');
+				this.setDefaultDataInputDate();
 				this.updateBillingFlag();
 				const row = this.rowWithoutAmountSeparators(this.editableRow);
 				row[index] = this.nextProductionNumber(index);
@@ -251,6 +260,7 @@ async addProject() {
 setPickedDate(index, value) {
 			if (!value) {
 				this.editableRow[index] = '';
+				this.updateBillingFlag();
 				return;
 			}
 			const parts = value.split('-');
@@ -322,6 +332,7 @@ async saveProjectChanges() {
 
 			try {
 				const worksheet = this.workbook.Sheets[this.sheetName];
+				this.setDefaultDataInputDate();
 				this.updateBillingFlag();
 				const updatedRow = this.rowWithoutAmountSeparators(this.editableRow);
 				XLSX.utils.sheet_add_aoa(worksheet, [updatedRow], {

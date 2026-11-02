@@ -4,7 +4,7 @@ require_once __DIR__ . '/lock-common.php';
 // SheetJSが生成したExcelバイナリをNASへ保存する
 $excelPath = WORK_MANAGER_EXCEL_PATH;
 $backupDirectory = WORK_MANAGER_NAS_DIRECTORY . '\\BACKUP';
-$backupLimit = 5;
+$backupLimit = 20;
 date_default_timezone_set('Asia/Tokyo');
 
 header('Content-Type: application/json; charset=UTF-8');
