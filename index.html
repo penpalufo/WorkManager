@@ -15,7 +15,7 @@
 			<h1>WorkManager</h1>
 			<a
 				class="app-version"
-				href="./md.html?file=仕様書_v0.7.0.md"
+				href="./md.html?file=仕様書_v0.7.2.md"
 				target="_blank"
 				rel="noopener noreferrer"
 			>v{{ appVersion }} ／ 最終更新日：{{ appUpdatedAt }}</a>
@@ -47,7 +47,7 @@
 		<div v-if="viewMode === 'list' && !isLoading && !isMasterLoading && rows.length" class="list-actions">
 			<button type="button" @click="openNewProject" :disabled="isSaving || !workbook || !hasFileLock">新規案件追加</button>
 			<button type="button" class="report-button" @click="openBillingReport">請求分を表示</button>
-			<button type="button" class="report-button" @click="downloadUnbilledList">未請求リスト</button>
+			<button type="button" class="report-button" @click="openUnbilledList">未請求リスト</button>
 		</div>
 
 		<!-- リスト画面：Excelの案件を新しい順に表示 -->
@@ -236,6 +236,43 @@
 					<strong>{{ formatBillingReportAmount(billingReportTotal) }}</strong>
 				</div>
 			</div>
+		</section>
+
+		<!-- 未請求リスト画面：対象案件を確認してからタブ区切りテキストを出力 -->
+		<section v-if="!isLoading && !isMasterLoading && rows.length && viewMode === 'unbilled-list'" class="unbilled-list-screen">
+			<div class="unbilled-list-toolbar">
+				<button type="button" class="secondary-button" @click="backToList">一覧へ戻る</button>
+				<h2>未請求リスト</h2>
+				<button type="button" @click="downloadUnbilledList" :disabled="unbilledListMissingColumns.length > 0">
+					ダウンロード
+				</button>
+			</div>
+
+			<p v-if="unbilledListMissingColumns.length" class="message error" role="alert">
+				未請求リストを表示できません。Excelに必要な列がありません：{{ unbilledListMissingColumns.join('、') }}
+			</p>
+			<template v-else>
+				<p class="unbilled-list-summary" role="status">対象案件 {{ unbilledListItems.length }}件</p>
+				<p v-if="!unbilledListItems.length" class="message">対象となる未請求案件はありません。</p>
+				<div v-else class="table-wrapper">
+					<table>
+						<thead>
+							<tr>
+								<th>制作番号</th>
+								<th>案件名</th>
+								<th>会社名</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr v-for="item in unbilledListItems" :key="item.rowNumber">
+								<td>{{ item.productionNumber }}</td>
+								<td>{{ item.projectName }}</td>
+								<td>{{ item.companyName }}</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</template>
 		</section>
 
 		<!-- Excelに表示可能な行がない場合の案内 -->

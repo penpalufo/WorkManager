@@ -101,14 +101,14 @@ export const projectFormMethods = {
 	},
 
 	updateBillingFlag() {
-		// 請求日と請求金額が揃った案件を自動的に請求済みにする。
+		// 請求日と請求金額が揃った案件、または請求金額が0円の案件を請求済みにする。
 		const dateIndex = this.projectFieldIndex('請求日');
 		const amountIndex = this.projectFieldIndex('請求金額');
 		const flagIndex = this.projectFieldIndex('請求フラグ');
 		if ([dateIndex, amountIndex, flagIndex].some(index => index < 0)) return;
 		const hasDate = String(this.editableRow[dateIndex] == null ? '' : this.editableRow[dateIndex]).trim() !== '';
-		const hasAmount = this.numericBillingValue(this.editableRow[amountIndex]) !== null;
-		if (hasDate && hasAmount) this.editableRow[flagIndex] = '請求済み';
+		const amount = this.numericBillingValue(this.editableRow[amountIndex]);
+		if (amount === 0 || (hasDate && amount !== null)) this.editableRow[flagIndex] = '請求済み';
 	},
 
 	recalculateBilling() {

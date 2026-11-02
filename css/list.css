@@ -129,6 +129,25 @@ button:disabled {
 	background: #315180;
 }
 
+/* ===== 未請求リスト画面 ===== */
+.unbilled-list-toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 12px;
+	margin-bottom: 20px;
+}
+
+.unbilled-list-toolbar h2 {
+	flex: 1;
+	margin: 0;
+}
+
+.unbilled-list-summary {
+	margin: 0 0 12px;
+	font-weight: 600;
+}
+
 /* ===== 案件一覧テーブル ===== */
 .table-wrapper {
 	margin-bottom: 12px;

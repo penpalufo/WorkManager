@@ -8,7 +8,7 @@ import { utilsMethods } from './utils.js';
 import { fileLockMethods } from './file-lock.js';
 import { invoicePdfMethods } from './invoice-pdf.js';
 import { billingReportComputed, billingReportMethods } from './billing-report.js';
-import { unbilledListMethods } from './unbilled-list.js';
+import { unbilledListComputed, unbilledListMethods } from './unbilled-list.js';
 
 console.log('ver ' + APP_VERSION);
 
@@ -60,7 +60,8 @@ computed: {
 	// 各画面で使用する算出値を機能別モジュールから取り込む
     ...projectListComputed,
     ...projectFormComputed,
-    ...billingReportComputed
+    ...billingReportComputed,
+    ...unbilledListComputed
 },
 watch: {
     ...projectListWatch
