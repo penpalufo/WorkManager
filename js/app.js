@@ -37,6 +37,7 @@ data() {
 			projectSearch: '',
 			billingReportMonth: '',
 			viewMode: 'list',
+			editReturnView: 'list',
 			selectedRowIndex: -1,
 			editableRow: [],
 			// 取引先名マスターと取引先担当者マスター

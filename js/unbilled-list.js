@@ -16,13 +16,14 @@ export const unbilledListComputed = {
 		const oneYearAgo = new Date(today);
 		oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
 
-		return this.rows.slice(1).map((row, index) => ({ row, rowNumber: index + 2 })).filter(entry => {
+		return this.rows.slice(1).map((row, index) => ({ row, rowIndex: index + 1, rowNumber: index + 2 })).filter(entry => {
 			const productionNumber = this.unbilledListCell(entry.row[indexes['制作番号']]);
 			const billingFlag = this.unbilledListCell(entry.row[indexes['請求フラグ']]);
 			const inputDate = this.unbilledListDate(entry.row[indexes['データ入力日']]);
 			return productionNumber !== '' && billingFlag !== '請求済み' &&
 				inputDate !== null && inputDate >= oneYearAgo && inputDate <= today;
 		}).map(entry => ({
+			rowIndex: entry.rowIndex,
 			rowNumber: entry.rowNumber,
 			productionNumber: this.unbilledListCell(entry.row[indexes['制作番号']]),
 			projectName: this.unbilledListCell(entry.row[indexes['案件名']]),
@@ -53,6 +54,11 @@ export const unbilledListMethods = {
 		this.message = '';
 		this.messageType = '';
 		window.scrollTo({ top: 0, behavior: 'smooth' });
+	},
+
+	openUnbilledProject(item) {
+		if (!item) return;
+		this.openProjectAtRowIndex(item.rowIndex, 'unbilled-list');
 	},
 
 	downloadUnbilledList() {

@@ -174,6 +174,7 @@ async deleteProject() {
 				this.rows.splice(rowIndex, 1);
 				this.selectedRowIndex = -1;
 				this.editableRow = [];
+				this.editReturnView = 'list';
 				this.viewMode = 'list';
 				this.message = '案件を削除しました';
 				this.messageType = 'success';
@@ -207,6 +208,7 @@ openNewProject() {
 				this.setDefaultDataInputDate();
 				this.initializeBilling();
 				this.selectedRowIndex = -1;
+				this.editReturnView = 'list';
 				this.viewMode = 'new';
 				this.message = '';
 				this.messageType = '';
@@ -245,6 +247,7 @@ async addProject() {
 				this.customerSearch = '';
 				this.projectSearch = '';
 				this.currentPage = 1;
+				this.editReturnView = 'list';
 				this.viewMode = 'list';
 				this.editableRow = [];
 				this.message = '案件を追加しました';
@@ -296,11 +299,15 @@ onContactChanged() {
 		},
 
 openProject(rowIndex) {
-			if (!this.hasFileLock) return;
 			// 逆順の表示位置をExcel上の元の行番号へ戻す
 			const entry = this.filteredEntries[this.pageStartIndex + rowIndex];
 			if (!entry) return;
-			this.selectedRowIndex = entry.index;
+			this.openProjectAtRowIndex(entry.index, 'list');
+		},
+
+openProjectAtRowIndex(rowIndex, returnView = 'list') {
+			if (!this.hasFileLock || rowIndex < 1 || !this.rows[rowIndex]) return;
+			this.selectedRowIndex = rowIndex;
 			this.editableRow = Array.from({ length: this.columnCount }, (_, index) => {
 				const value = this.rows[this.selectedRowIndex][index];
 				return value === null || typeof value === 'undefined' ? '' : value;
@@ -308,13 +315,16 @@ openProject(rowIndex) {
 			this.initializeBilling();
 			this.message = '';
 			this.messageType = '';
+			this.editReturnView = returnView;
 			this.viewMode = 'edit';
 			window.scrollTo({ top: 0, behavior: 'smooth' });
 		},
 
 backToList() {
 			if (this.isSaving) return;
-			this.viewMode = 'list';
+			const returnView = this.viewMode === 'edit' ? this.editReturnView : 'list';
+			this.viewMode = returnView;
+			this.editReturnView = 'list';
 			this.selectedRowIndex = -1;
 			this.editableRow = [];
 		},

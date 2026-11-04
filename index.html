@@ -15,7 +15,7 @@
 			<h1>WorkManager</h1>
 			<a
 				class="app-version"
-				href="./md.html?file=仕様書_v0.7.4.md"
+				href="./md.html?file=仕様書_v0.7.5.md"
 				target="_blank"
 				rel="noopener noreferrer"
 			>v{{ appVersion }} ／ 最終更新日：{{ appUpdatedAt }}</a>
@@ -264,7 +264,14 @@
 							</tr>
 						</thead>
 						<tbody>
-							<tr v-for="item in unbilledListItems" :key="item.rowNumber">
+							<tr
+								v-for="item in unbilledListItems"
+								:key="item.rowNumber"
+								class="project-row"
+								tabindex="0"
+								@click="openUnbilledProject(item)"
+								@keydown.enter="openUnbilledProject(item)"
+							>
 								<td>{{ item.productionNumber }}</td>
 								<td>{{ item.projectName }}</td>
 								<td>{{ item.companyName }}</td>
