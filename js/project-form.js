@@ -186,16 +186,23 @@ async deleteProject() {
 			}
 		},
 
-nextProductionNumber(index) {
-			for (let r = this.rows.length - 1; r >= 1; r--) {
+nextProductionNumber(index, now = new Date()) {
+			// 現在年月と一致するYYMMNN形式の制作番号から、末尾2桁の最大値を探す。
+			const prefix = String(now.getFullYear() % 100).padStart(2, '0') +
+				String(now.getMonth() + 1).padStart(2, '0');
+			const pattern = new RegExp('^' + prefix + '(\\d{2})$');
+			let maximumCount = 0;
+			for (let r = 1; r < this.rows.length; r++) {
 				const value = String(this.rows[r][index] == null ? '' : this.rows[r][index]).trim().replace(/,/g, '');
-				if (!value) continue;
-				if (!/^\d+$/.test(value) || !Number.isSafeInteger(Number(value) + 1)) {
-					throw new Error('最後の制作番号を数値として採番できません。');
-				}
-				return String(Number(value) + 1).padStart(value.length, '0');
+				const match = value.match(pattern);
+				if (!match) continue;
+				const count = Number(match[1]);
+				if (count >= 1 && count <= 99) maximumCount = Math.max(maximumCount, count);
 			}
-			return '1';
+			if (maximumCount >= 99) {
+				throw new Error(prefix + 'の制作番号は月内上限99件に達しています。');
+			}
+			return prefix + String(maximumCount + 1).padStart(2, '0');
 		},
 
 openNewProject() {
@@ -342,7 +349,6 @@ async saveProjectChanges() {
 
 			try {
 				const worksheet = this.workbook.Sheets[this.sheetName];
-				this.setDefaultDataInputDate();
 				this.updateBillingFlag();
 				const updatedRow = this.rowWithoutAmountSeparators(this.editableRow);
 				XLSX.utils.sheet_add_aoa(worksheet, [updatedRow], {

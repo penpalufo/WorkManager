@@ -15,7 +15,7 @@
 			<h1>WorkManager</h1>
 			<a
 				class="app-version"
-				href="./md.html?file=仕様書_v0.7.5.md"
+				href="./md.html?file=仕様書_v0.7.6.md"
 				target="_blank"
 				rel="noopener noreferrer"
 			>v{{ appVersion }} ／ 最終更新日：{{ appUpdatedAt }}</a>
@@ -116,7 +116,7 @@
 						<span>{{ field.label }}</span>
 						<span v-if="group.title === 'その他'" class="field-text">{{ formatEditValue(editableRow[field.index], field.label) }}</span>
 						<span
-							v-else-if="['制作番号', '製作番号', 'データ入力日', '担当者ID', '取引先ID', '請求フラグ', '税額', '税込請求金額'].includes(field.label.replace(/\s/g, ''))"
+							v-else-if="['制作番号', '製作番号', '担当者ID', '取引先ID', '請求フラグ', '税額', '税込請求金額'].includes(field.label.replace(/\s/g, ''))"
 							class="field-text"
 						>{{ formatEditValue(editableRow[field.index], field.label) }}</span>
 						<select
@@ -146,7 +146,7 @@
 							<option v-for="name in contactNames" :key="name" :value="name">{{ name }}</option>
 						</select>
 						<input
-							v-else-if="['請求日', '請求予定日'].includes(field.label.replace(/\s/g, ''))"
+							v-else-if="['請求日', '請求予定日', 'データ入力日'].includes(field.label.replace(/\s/g, ''))"
 							type="date"
 							:value="datePickerValue(editableRow[field.index], field.label)"
 							:disabled="isSaving"

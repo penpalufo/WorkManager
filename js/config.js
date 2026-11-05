@@ -1,4 +1,4 @@
 // 画面、起動ログ、仕様書、CHANGELOGで共通利用するバージョン情報。
 // 更新時はバージョン・更新日とCHANGELOG.mdを揃える。
-export const APP_VERSION = '0.7.5';
-export const APP_UPDATED_AT = '2026/11/04';
+export const APP_VERSION = '0.7.6';
+export const APP_UPDATED_AT = '2026/11/05';

@@ -20,6 +20,7 @@ export const unbilledListComputed = {
 			const productionNumber = this.unbilledListCell(entry.row[indexes['制作番号']]);
 			const billingFlag = this.unbilledListCell(entry.row[indexes['請求フラグ']]);
 			const inputDate = this.unbilledListDate(entry.row[indexes['データ入力日']]);
+			// 請求フラグが空欄や空白だけの案件も、「請求済み」ではないため対象に含める。
 			return productionNumber !== '' && billingFlag !== '請求済み' &&
 				inputDate !== null && inputDate >= oneYearAgo && inputDate <= today;
 		}).map(entry => ({
@@ -28,8 +29,8 @@ export const unbilledListComputed = {
 			productionNumber: this.unbilledListCell(entry.row[indexes['制作番号']]),
 			projectName: this.unbilledListCell(entry.row[indexes['案件名']]),
 			companyName: this.unbilledListCell(entry.row[indexes['取引先名']])
-		})).sort((a, b) => b.productionNumber.localeCompare(
-			a.productionNumber,
+		})).sort((a, b) => a.productionNumber.localeCompare(
+			b.productionNumber,
 			'ja',
 			{ numeric: true, sensitivity: 'base' }
 		));
